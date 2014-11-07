@@ -20,7 +20,7 @@ public:
     void setParameters(double U0, vector<double>& dU, vector<double>& J, double mu);
     void setTheta(double theta);
     
-    void solve();
+    double solve(vector<double>& f);
     
     SX& getE() { return E; }
     SX subst();

@@ -47,6 +47,7 @@ GroundStateProblem::GroundStateProblem() {
     
     E = substitute(vector<SX>{E}, fin, xs)[0];
     E = substitute(vector<SX>{E}, params, ps)[0];
+    simplify(E);
     
     lb = DMatrix(x.size()); lb.setAll(-1);
     ub = DMatrix(x.size()); ub.setAll(1);
@@ -66,15 +67,13 @@ void GroundStateProblem::setParameters(double U0, vector<double>& dU, vector<dou
     params.insert(params.end(), J.begin(), J.end());
     params.push_back(mu);
     params.push_back(0);
-
-//    Eparams = substitute(vector<SX>{E}, params, subst)[0];
 }
 
 void GroundStateProblem::setTheta(double theta) {
     params.back() = theta;
 }
 
-void GroundStateProblem::solve() {
+double GroundStateProblem::solve(vector<double>& f) {
     Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
 
     nlp = NlpSolver("ipopt", Ef);
@@ -94,75 +93,17 @@ void GroundStateProblem::solve() {
     nlp.setInput(params, "p");
 
     nlp.evaluate();
+
+    DMatrix xout = nlp.output("x");
+    f.resize(xout.size());
+    for (int i = 0; i < xout.size(); i++) {
+        f[i] = xout.at(i);
+    }
+//    f = nlp.output("x");
+    return nlp.output("f").getValue();
     
-    cout << str(nlp.output("f")) << endl;
-    cout << str(nlp.output("x")) << endl;
-}
-
-//void GroundStateProblem::setTheta(double th) {
-//    Etheta = substitute(Eparams, theta, th);
-//    
-//    SX x = SX::sym("x", fin.size());
-//    vector<SX> xvars;
-//    for (int i = 0; i < x.size(); i++) {
-//        xvars.push_back(x.at(i));
-//    }
-//    SX qwe = substitute(vector<SX>{Etheta}, fin, xvars)[0];
-//    
-//    Ef = SXFunction(nlpIn("x", x), nlpOut("f", qwe));
-//    //    Ef.init();
-//    nlp = NlpSolver("ipopt", Ef);
-//
-//    nlp.setOption("verbose", true);
-//    nlp.setOption("linear_solver", "ma27");
-//    nlp.setOption("hessian_approximation", "limited-memory");
-//
-//    nlp.init();
-//
-//    DMatrix lb = -1 * DMatrix::ones(fin.size());
-//    DMatrix ub = DMatrix::ones(fin.size());
-//    DMatrix x0 = 0.5 * DMatrix::ones(fin.size());
-//    nlp.setInput(lb, "lbx");
-//    nlp.setInput(ub, "ubx");
-//    nlp.setInput(x0, "x0");
-//    
-//    nlp.evaluate();
-//    
-//    //    vector<SX> in(fin.size(), 1);
-//    //    SX out = Ef(in)[0];
-//    //    cout << out << endl;
-//}
-
-SX GroundStateProblem::subst() {
-    SX E2 = E;
-    //    for (SX f : fin) {
-    //        E2 = substitute(E2, f, 1);
-    //    }
-    //    for (SX Ui : U) {
-    //        E2 = substitute(E2, Ui, 1);
-    //    }
-    //    for (SX dUi : dU) {
-    //        E2 = substitute(E2, dUi, 1);
-    //    }
-    //    for (SX Ji : J) {
-    //        E2 = substitute(E2, Ji, 1);
-    //    }
-    //    E2 = substitute(E2, mu, 1);
-    //    E2 = substitute(E2, theta, 1);
-    //    E2 = substitute(E2, U0, 1);
-    vector<SX> sxs;
-    for (SX f : fin) sxs.push_back(f);
-    //    for (SX Ui : U) sxs.push_back(Ui);
-    for (SX dUi : dU) sxs.push_back(dUi);
-    for (SX Ji : J) sxs.push_back(Ji);
-    sxs.push_back(mu);
-    sxs.push_back(theta);
-    sxs.push_back(U0);
-    vector<SX> subs(sxs.size(), 1);
-    vector<SX> Es;
-    Es.push_back(E2);
-    vector<SX> Es2 = substitute(Es, sxs, subs);
-    return Es2[0];
+//    cout << str(nlp.output("f")) << endl;
+//    cout << str(nlp.output("x")) << endl;
 }
 
 SX GroundStateProblem::energy() {
@@ -175,7 +116,7 @@ SX GroundStateProblem::energy() {
     vector<complex<SX>* > f(L);
     vector<SX> norm2(L, 0);
     for (int i = 0; i < L; i++) {
-        f[i] = reinterpret_cast<complex<SX>*> (&fin[2 * i * (nmax + 1)]);
+        f[i] = reinterpret_cast<complex<SX>*> (&fin[2 * i * dim]);
         for (int n = 0; n <= nmax; n++) {
             norm2[i] += f[i][n].real() * f[i][n].real() + f[i][n].imag() * f[i][n].imag();
         }

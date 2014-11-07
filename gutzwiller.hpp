@@ -26,10 +26,13 @@ using namespace std;
 
 typedef complex<double> doublecomplex;
 
-#define L 5
-#define nmax 5
+//#define L 5
+//#define nmax 5
 //#define idim (nmax+1)
 //#define dim (nmax+1)
+const int L = 5;
+const int nmax = 5;
+const int dim = nmax + 1;
 
 template<class T>
 complex<T> operator~(const complex<T> a) {
