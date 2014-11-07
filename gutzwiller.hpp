@@ -94,8 +94,12 @@ inline int mod(int i) {
 	return (i + L) % L;
 }
 
-inline double g(int n, int m) {
-	return sqrt(1.0*(n + 1) * m);
+//inline double g(int n, int m) {
+//	return sqrt(1.0*(n + 1) * m);
+//}
+
+inline SX g(int n, int m) {
+    return sqrt(1.0*(n + 1) * m);
 }
 
 extern vector<double> nu;
@@ -104,11 +108,23 @@ inline double eps(vector<double> U, int i, int j, int n, int m) {
 	return n * U[i] - (m - 1) * U[j];
 }
 
+inline SX eps(vector<SX>& U, int i, int j, int n, int m) {
+	return n * U[i] - (m - 1) * U[j];
+}
+
 inline double eps(double U, int n, int m) {
     return (n - m + 1) * U;
 }
 
+inline SX eps(SX& U, int n, int m) {
+    return (n - m + 1) * U;
+}
+
 inline double eps(vector<double> U, int i, int j, int n, int m, int k, int l, int p, int q) {
+    return n*U[i] - (m-1)*U[j] + (q-1)*U[k] - p*U[l];
+}
+
+inline SX eps(vector<SX>& U, int i, int j, int n, int m, int k, int l, int p, int q) {
     return n*U[i] - (m-1)*U[j] + (q-1)*U[k] - p*U[l];
 }
 
