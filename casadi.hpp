@@ -20,6 +20,8 @@ public:
     void setParameters(double U0, vector<double>& dU, vector<double>& J, double mu);
     void setTheta(double theta);
     
+    void solve();
+    
     SX& getE() { return E; }
     SX subst();
     SX& getEtheta() { return Etheta; }
@@ -41,7 +43,15 @@ private:
     SX mu;
     SX theta;
     
-    vector<SX> params;
+    SX x;
+    SX p;
+    
+//    vector<SX> params;
+    vector<double> params;
+    
+    DMatrix lb;
+    DMatrix ub;
+    DMatrix x0;
     
     SX E;
     SX Eparams;
