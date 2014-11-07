@@ -1,0 +1,45 @@
+/* 
+ * File:   casadi.hpp
+ * Author: Abuenameh
+ *
+ * Created on 06 November 2014, 17:45
+ */
+
+#ifndef CASADI_HPP
+#define	CASADI_HPP
+
+#include <casadi/casadi.hpp>
+
+using namespace casadi;
+
+#include "gutzwiller.hpp"
+
+class GroundStateProblem {
+public:
+    GroundStateProblem();
+    SX& getE() { return E; }
+    
+private:
+    string frinName(int i, int n) { return "fr[" + to_string(i) + "][" + to_string(n) + "]"; }
+    string fiinName(int i, int n) { return "fi[" + to_string(i) + "][" + to_string(n) + "]"; }
+    string UName(int i) { return "U[" + to_string(i) + "]"; }
+    string dUName(int i) { return "dU[" + to_string(i) + "]"; }
+    string JName(int i) { return "J[" + to_string(i) + "]"; }
+    
+    SX energy();
+    
+    vector<SX> fin;
+    vector<SX> U;
+    vector<SX> dU;
+    vector<SX> J;
+    SX U0;
+    SX mu;
+    
+    SX E;
+    SXFunction Ef;
+};
+
+
+
+#endif	/* CASADI_HPP */
+
