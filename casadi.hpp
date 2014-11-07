@@ -17,7 +17,12 @@ using namespace casadi;
 class GroundStateProblem {
 public:
     GroundStateProblem();
+    void setParameters(double U0, vector<double>& dU, vector<double>& J, double mu);
+    void setTheta(double theta);
+    
     SX& getE() { return E; }
+    SX subst();
+    SX& getEtheta() { return Etheta; }
     
 private:
     string frinName(int i, int n) { return "fr[" + to_string(i) + "][" + to_string(n) + "]"; }
@@ -29,14 +34,20 @@ private:
     SX energy();
     
     vector<SX> fin;
-    vector<SX> U;
+//    vector<SX> U;
+    SX U0;
     vector<SX> dU;
     vector<SX> J;
-    SX U0;
     SX mu;
+    SX theta;
+    
+    vector<SX> params;
     
     SX E;
+    SX Eparams;
+    SX Etheta;
     SXFunction Ef;
+    NlpSolver nlp;
 };
 
 
