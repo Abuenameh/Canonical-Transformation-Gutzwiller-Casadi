@@ -17,7 +17,6 @@ GroundStateProblem::GroundStateProblem() {
             fin.push_back(SX::sym(frinName(i, n)));
             fin.push_back(SX::sym(fiinName(i, n)));
         }
-        //        U.push_back(SX::sym(UName(i)));
         dU.push_back(SX::sym(dUName(i)));
         J.push_back(SX::sym(JName(i)));
     }
@@ -25,12 +24,33 @@ GroundStateProblem::GroundStateProblem() {
     mu = SX::sym("mu");
     theta = SX::sym("theta");
 
+    vector<SX> params;
     params.push_back(U0);
     for (SX sx : dU) params.push_back(sx);
     for (SX sx : J) params.push_back(sx);
     params.push_back(mu);
+    params.push_back(theta);
 
     E = energy();
+    
+    x = SX::sym("x", fin.size());
+    p = SX::sym("p", params.size());
+    
+    vector<SX> xs;
+    for (int i = 0; i < x.size(); i++) {
+        xs.push_back(x.at(i));
+    }
+    vector<SX> ps;
+    for (int i = 0; i < p.size(); i++) {
+        ps.push_back(p.at(i));
+    }
+    
+    E = substitute(vector<SX>{E}, fin, xs)[0];
+    E = substitute(vector<SX>{E}, params, ps)[0];
+    
+    lb = DMatrix(x.size()); lb.setAll(-1);
+    ub = DMatrix(x.size()); ub.setAll(1);
+    x0 = DMatrix(x.size()); x0.setAll(0.5);
 }
 
 void GroundStateProblem::setParameters(double U0, vector<double>& dU, vector<double>& J, double mu) {
@@ -40,42 +60,78 @@ void GroundStateProblem::setParameters(double U0, vector<double>& dU, vector<dou
     subst.insert(subst.end(), J.begin(), J.end());
     subst.push_back(mu);
 
-    Eparams = substitute(vector<SX>{E}, params, subst)[0];
+    params.clear();
+    params.push_back(U0);
+    params.insert(params.end(), dU.begin(), dU.end());
+    params.insert(params.end(), J.begin(), J.end());
+    params.push_back(mu);
+    params.push_back(0);
+
+//    Eparams = substitute(vector<SX>{E}, params, subst)[0];
 }
 
-void GroundStateProblem::setTheta(double th) {
-    Etheta = substitute(Eparams, theta, th);
-    
-    SX x = SX::sym("x", fin.size());
-    vector<SX> xvars;
-    for (int i = 0; i < x.size(); i++) {
-        xvars.push_back(x.at(i));
-    }
-    SX qwe = substitute(vector<SX>{Etheta}, fin, xvars)[0];
-    
-    Ef = SXFunction(nlpIn("x", x), nlpOut("f", qwe));
-    //    Ef.init();
+void GroundStateProblem::setTheta(double theta) {
+    params.back() = theta;
+}
+
+void GroundStateProblem::solve() {
+    Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
+
     nlp = NlpSolver("ipopt", Ef);
 
-    nlp.setOption("verbose", true);
+    nlp.setOption("verbose", false);
+    nlp.setOption("print_level", 0);
+    nlp.setOption("print_time", 0);
     nlp.setOption("linear_solver", "ma27");
     nlp.setOption("hessian_approximation", "limited-memory");
 
     nlp.init();
 
-    DMatrix lb = -1 * DMatrix::ones(fin.size());
-    DMatrix ub = DMatrix::ones(fin.size());
-    DMatrix x0 = 0.5 * DMatrix::ones(fin.size());
     nlp.setInput(lb, "lbx");
     nlp.setInput(ub, "ubx");
     nlp.setInput(x0, "x0");
     
+    nlp.setInput(params, "p");
+
     nlp.evaluate();
     
-    //    vector<SX> in(fin.size(), 1);
-    //    SX out = Ef(in)[0];
-    //    cout << out << endl;
+    cout << str(nlp.output("f")) << endl;
+    cout << str(nlp.output("x")) << endl;
 }
+
+//void GroundStateProblem::setTheta(double th) {
+//    Etheta = substitute(Eparams, theta, th);
+//    
+//    SX x = SX::sym("x", fin.size());
+//    vector<SX> xvars;
+//    for (int i = 0; i < x.size(); i++) {
+//        xvars.push_back(x.at(i));
+//    }
+//    SX qwe = substitute(vector<SX>{Etheta}, fin, xvars)[0];
+//    
+//    Ef = SXFunction(nlpIn("x", x), nlpOut("f", qwe));
+//    //    Ef.init();
+//    nlp = NlpSolver("ipopt", Ef);
+//
+//    nlp.setOption("verbose", true);
+//    nlp.setOption("linear_solver", "ma27");
+//    nlp.setOption("hessian_approximation", "limited-memory");
+//
+//    nlp.init();
+//
+//    DMatrix lb = -1 * DMatrix::ones(fin.size());
+//    DMatrix ub = DMatrix::ones(fin.size());
+//    DMatrix x0 = 0.5 * DMatrix::ones(fin.size());
+//    nlp.setInput(lb, "lbx");
+//    nlp.setInput(ub, "ubx");
+//    nlp.setInput(x0, "x0");
+//    
+//    nlp.evaluate();
+//    
+//    //    vector<SX> in(fin.size(), 1);
+//    //    SX out = Ef(in)[0];
+//    //    cout << out << endl;
+//}
 
 SX GroundStateProblem::subst() {
     SX E2 = E;
