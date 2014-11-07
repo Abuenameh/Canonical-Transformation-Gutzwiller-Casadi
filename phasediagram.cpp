@@ -145,8 +145,6 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
     double scale = 1;
     
     GroundStateProblem prob;
-//    DMatrix x0(ndim);
-//    DMatrix norms(ndim);
 
     for (;;) {
         Point point;
@@ -268,18 +266,21 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
 
 int main(int argc, char** argv) {
     GroundStateProblem prob;
-
-//    cout << prob.getE() << endl;
-//    cout << prob.subst() << endl;
-    vector<double> dU(L, 0);
-    vector<double> J(L, 0.01);
-    prob.setParameters(1, dU, J, 0.5);
-    prob.setTheta(0);
+//
+////    cout << prob.getE() << endl;
+////    cout << prob.subst() << endl;
+//    vector<double> dU(L, 0);
+//    vector<double> J(L, 0.01);
+//    prob.setParameters(1, dU, J, 0.5);
+//    prob.setTheta(0);
+//    vector<double> f_(2*L*dim, 1);
+//    cout << ::math(prob.call(f_)) << endl;
+//    return 0;
+////    vector<double> f;
 //    vector<double> f;
-    vector<double> f;
-    double E = prob.solve(f);
-//    prob.solve();
-    cout << E << endl;
+//    double E = prob.solve(f);
+////    prob.solve();
+//    cout << E << endl;
 //    cout << str(f) << endl;
 //    cout << prob.getEtheta() << endl;
     

@@ -22,6 +22,8 @@ public:
     
     double solve(vector<double>& f);
     
+    double call(vector<double>& f);
+    
     SX& getE() { return E; }
     SX subst();
     SX& getEtheta() { return Etheta; }

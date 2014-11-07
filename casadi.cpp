@@ -1,3 +1,7 @@
+#include <boost/thread.hpp>
+
+using namespace boost;
+
 #include "casadi.hpp"
 
 namespace casadi {
@@ -11,55 +15,80 @@ namespace casadi {
     }
 }
 
+boost::mutex problem_mutex;
+
 GroundStateProblem::GroundStateProblem() {
-    for (int i = 0; i < L; i++) {
-        for (int n = 0; n <= nmax; n++) {
-            fin.push_back(SX::sym(frinName(i, n)));
-            fin.push_back(SX::sym(fiinName(i, n)));
+    {
+        boost::mutex::scoped_lock lock(problem_mutex);
+        for (int i = 0; i < L; i++) {
+            for (int n = 0; n <= nmax; n++) {
+                fin.push_back(SX::sym(frinName(i, n)));
+                fin.push_back(SX::sym(fiinName(i, n)));
+            }
+            dU.push_back(SX::sym(dUName(i)));
+            J.push_back(SX::sym(JName(i)));
         }
-        dU.push_back(SX::sym(dUName(i)));
-        J.push_back(SX::sym(JName(i)));
-    }
-    U0 = SX::sym("U0");
-    mu = SX::sym("mu");
-    theta = SX::sym("theta");
+        U0 = SX::sym("U0");
+        mu = SX::sym("mu");
+        theta = SX::sym("theta");
 
-    vector<SX> params;
-    params.push_back(U0);
-    for (SX sx : dU) params.push_back(sx);
-    for (SX sx : J) params.push_back(sx);
-    params.push_back(mu);
-    params.push_back(theta);
+        vector<SX> params;
+        params.push_back(U0);
+        for (SX sx : dU) params.push_back(sx);
+        for (SX sx : J) params.push_back(sx);
+        params.push_back(mu);
+        params.push_back(theta);
 
-    E = energy();
-    
-    x = SX::sym("x", fin.size());
-    p = SX::sym("p", params.size());
-    
-    vector<SX> xs;
-    for (int i = 0; i < x.size(); i++) {
-        xs.push_back(x.at(i));
+        E = energy();
+
+        x = SX::sym("x", fin.size());
+        p = SX::sym("p", params.size());
+
+        vector<SX> xs;
+        for (int i = 0; i < x.size(); i++) {
+            xs.push_back(x.at(i));
+        }
+        vector<SX> ps;
+        for (int i = 0; i < p.size(); i++) {
+            ps.push_back(p.at(i));
+        }
+
+        E = substitute(vector<SX>{E}, fin, xs)[0];
+        E = substitute(vector<SX>{E}, params, ps)[0];
+        simplify(E);
+
+        lb = DMatrix(x.size());
+        lb.setAll(-1);
+        ub = DMatrix(x.size());
+        ub.setAll(1);
+        x0 = DMatrix(x.size());
+        x0.setAll(0.5);
+
+        Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
+
+        nlp = NlpSolver("ipopt", Ef);
+
+        nlp.setOption("verbose", false);
+        nlp.setOption("print_level", 0);
+        nlp.setOption("print_time", 0);
+        nlp.setOption("linear_solver", "ma27");
+        nlp.setOption("hessian_approximation", "limited-memory");
+
+        nlp.init();
+
+        nlp.setInput(lb, "lbx");
+        nlp.setInput(ub, "ubx");
+        nlp.setInput(x0, "x0");
+
     }
-    vector<SX> ps;
-    for (int i = 0; i < p.size(); i++) {
-        ps.push_back(p.at(i));
-    }
-    
-    E = substitute(vector<SX>{E}, fin, xs)[0];
-    E = substitute(vector<SX>{E}, params, ps)[0];
-    simplify(E);
-    
-    lb = DMatrix(x.size()); lb.setAll(-1);
-    ub = DMatrix(x.size()); ub.setAll(1);
-    x0 = DMatrix(x.size()); x0.setAll(0.5);
 }
 
 void GroundStateProblem::setParameters(double U0, vector<double>& dU, vector<double>& J, double mu) {
-    vector<SX> subst;
-    subst.push_back(U0);
-    subst.insert(subst.end(), dU.begin(), dU.end());
-    subst.insert(subst.end(), J.begin(), J.end());
-    subst.push_back(mu);
+    //    vector<SX> subst;
+    //    subst.push_back(U0);
+    //    subst.insert(subst.end(), dU.begin(), dU.end());
+    //    subst.insert(subst.end(), J.begin(), J.end());
+    //    subst.push_back(mu);
 
     params.clear();
     params.push_back(U0);
@@ -73,23 +102,42 @@ void GroundStateProblem::setTheta(double theta) {
     params.back() = theta;
 }
 
+double GroundStateProblem::call(vector<double>& f) {
+    SX E2 = E;
+    vector<SX> farg(2);
+    farg[0] = SX::zeros(f.size());
+    for (int i = 0; i < f.size(); i++) {
+        farg[0].at(i) = f[i];
+    }
+    farg[1] = SX::zeros(params.size());
+    for (int i = 0; i < params.size(); i++) {
+        farg[1].at(i) = params[i];
+    }
+    //    for (double fin : f) {
+    //        farg.push_back(fin);
+    //    }
+    SXFunction Efunc = SXFunction(vector<SX>{x, p}, E);
+    Efunc.init();
+    return Efunc(farg)[0].getValue();
+}
+
 double GroundStateProblem::solve(vector<double>& f) {
-    Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
+    //    Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
+    //
+    //    nlp = NlpSolver("ipopt", Ef);
+    //
+    //    nlp.setOption("verbose", false);
+    //    nlp.setOption("print_level", 0);
+    //    nlp.setOption("print_time", 0);
+    //    nlp.setOption("linear_solver", "ma27");
+    //    nlp.setOption("hessian_approximation", "limited-memory");
+    //
+    //    nlp.init();
+    //
+    //    nlp.setInput(lb, "lbx");
+    //    nlp.setInput(ub, "ubx");
+    //    nlp.setInput(x0, "x0");
 
-    nlp = NlpSolver("ipopt", Ef);
-
-    nlp.setOption("verbose", false);
-    nlp.setOption("print_level", 0);
-    nlp.setOption("print_time", 0);
-    nlp.setOption("linear_solver", "ma27");
-    nlp.setOption("hessian_approximation", "limited-memory");
-
-    nlp.init();
-
-    nlp.setInput(lb, "lbx");
-    nlp.setInput(ub, "ubx");
-    nlp.setInput(x0, "x0");
-    
     nlp.setInput(params, "p");
 
     nlp.evaluate();
@@ -99,11 +147,11 @@ double GroundStateProblem::solve(vector<double>& f) {
     for (int i = 0; i < xout.size(); i++) {
         f[i] = xout.at(i);
     }
-//    f = nlp.output("x");
+    //    f = nlp.output("x");
     return nlp.output("f").getValue();
-    
-//    cout << str(nlp.output("f")) << endl;
-//    cout << str(nlp.output("x")) << endl;
+
+    //    cout << str(nlp.output("f")) << endl;
+    //    cout << str(nlp.output("x")) << endl;
 }
 
 SX GroundStateProblem::energy() {
@@ -123,7 +171,8 @@ SX GroundStateProblem::energy() {
     }
 
     complex<SX> E;
-    E = 0;
+    //    E = 0;
+    E = complex<SX>(0, 0);
 
     complex<SX> Ei, Ej1, Ej2, Ej1j2, Ej1k1, Ej2k2;
     for (int i = 0; i < L; i++) {
@@ -133,16 +182,24 @@ SX GroundStateProblem::energy() {
         int j2 = mod(i + 1);
         int k2 = mod(i + 2);
 
-        Ei = 0;
-        Ej1 = 0;
-        Ej2 = 0;
-        Ej1j2 = 0;
-        Ej1k1 = 0;
-        Ej2k2 = 0;
+        //        Ei = 0;
+        //        Ej1 = 0;
+        //        Ej2 = 0;
+        //        Ej1j2 = 0;
+        //        Ej1k1 = 0;
+        //        Ej2k2 = 0;
+
+        Ei = complex<SX>(0, 0);
+        Ej1 = complex<SX>(0, 0);
+        Ej2 = complex<SX>(0, 0);
+        Ej1j2 = complex<SX>(0, 0);
+        Ej1k1 = complex<SX>(0, 0);
+        Ej2k2 = complex<SX>(0, 0);
 
         for (int n = 0; n <= nmax; n++) {
             Ei += (0.5 * (U0 + dU[i]) * n * (n - 1) - mu * n) * ~f[i][n] * f[i][n];
 
+            //#if 0
             if (n < nmax) {
                 Ej1 += -J[j1] * expth * g(n, n + 1) * ~f[i][n + 1] * ~f[j1][n]
                         * f[i][n] * f[j1][n + 1];
@@ -374,6 +431,7 @@ SX GroundStateProblem::energy() {
                     }
                 }
             }
+            //#endif
         }
 
         Ei /= norm2[i];
