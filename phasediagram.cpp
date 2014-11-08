@@ -298,7 +298,6 @@ int main(int argc, char** argv) {
     //    cout << str(f) << endl;
     //    cout << prob.getEtheta() << endl;
 
-    NlpSolver::loadPlugin("ipopt");
     Ipopt::IpoptApplication app;
     app.PrintCopyrightMessage();
 

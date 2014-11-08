@@ -18,57 +18,57 @@ namespace casadi {
 //boost::mutex problem_mutex;
 
 GroundStateProblem::GroundStateProblem() {
-        fin = SX::sym("f", 1, 1, 2*L*dim);
+    fin = SX::sym("f", 1, 1, 2 * L * dim);
     dU = SX::sym("dU", 1, 1, L);
     J = SX::sym("J", 1, 1, L);
-        U0 = SX::sym("U0");
-        mu = SX::sym("mu");
-        theta = SX::sym("theta");
+    U0 = SX::sym("U0");
+    mu = SX::sym("mu");
+    theta = SX::sym("theta");
 
-        vector<SX> params;
-        params.push_back(U0);
-        for (SX sx : dU) params.push_back(sx);
-        for (SX sx : J) params.push_back(sx);
-        params.push_back(mu);
-        params.push_back(theta);
+    vector<SX> params;
+    params.push_back(U0);
+    for (SX sx : dU) params.push_back(sx);
+    for (SX sx : J) params.push_back(sx);
+    params.push_back(mu);
+    params.push_back(theta);
 
-        SX E = energy();
+    SX E = energy();
 
-        x = SX::sym("x", fin.size());
-        p = SX::sym("p", params.size());
+    x = SX::sym("x", fin.size());
+    p = SX::sym("p", params.size());
 
-        vector<SX> xs;
-        for (int i = 0; i < x.size(); i++) {
-            xs.push_back(x.at(i));
-        }
-        vector<SX> ps;
-        for (int i = 0; i < p.size(); i++) {
-            ps.push_back(p.at(i));
-        }
+    vector<SX> xs;
+    for (int i = 0; i < x.size(); i++) {
+        xs.push_back(x.at(i));
+    }
+    vector<SX> ps;
+    for (int i = 0; i < p.size(); i++) {
+        ps.push_back(p.at(i));
+    }
 
-        E = substitute(vector<SX>{E}, fin, xs)[0];
-        E = substitute(vector<SX>{E}, params, ps)[0];
-        simplify(E);
+    E = substitute(vector<SX>{E}, fin, xs)[0];
+    E = substitute(vector<SX>{E}, params, ps)[0];
+    simplify(E);
 
-        DMatrix lb = DMatrix::repmat(-1, x.size());
-        DMatrix ub = DMatrix::repmat(1, x.size());
-        DMatrix x0 = DMatrix::repmat(0.5, x.size());
+    DMatrix lb = DMatrix::repmat(-1, x.size());
+    DMatrix ub = DMatrix::repmat(1, x.size());
+    DMatrix x0 = DMatrix::repmat(0.5, x.size());
 
-        SXFunction Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
+    SXFunction Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
 
-        nlp = NlpSolver("ipopt", Ef);
+    nlp = NlpSolver("ipopt", Ef);
 
-        nlp.setOption("verbose", false);
-        nlp.setOption("print_level", 0);
-        nlp.setOption("print_time", 0);
-        nlp.setOption("linear_solver", "ma27");
-        nlp.setOption("hessian_approximation", "limited-memory");
+    nlp.setOption("verbose", false);
+    nlp.setOption("print_level", 0);
+    nlp.setOption("print_time", 0);
+    nlp.setOption("linear_solver", "ma57");
+    nlp.setOption("hessian_approximation", "limited-memory");
 
-        nlp.init();
+    nlp.init();
 
-        nlp.setInput(lb, "lbx");
-        nlp.setInput(ub, "ubx");
-        nlp.setInput(x0, "x0");
+    nlp.setInput(lb, "lbx");
+    nlp.setInput(ub, "ubx");
+    nlp.setInput(x0, "x0");
 
 }
 
@@ -108,8 +108,8 @@ double GroundStateProblem::solve(vector<double>& f) {
     nlp.setInput(params, "p");
 
     nlp.evaluate();
-    
-    Dictionary& stats = const_cast<Dictionary&>(nlp.getStats());
+
+    Dictionary& stats = const_cast<Dictionary&> (nlp.getStats());
     status = stats["return_status"].toString();
     runtime = stats["t_mainloop"].toDouble();
 
@@ -140,7 +140,7 @@ SX GroundStateProblem::energy() {
     complex<SX> E = complex<SX>(0, 0);
 
     complex<SX> Ei, Ej1, Ej2, Ej1j2, Ej1k1, Ej2k2;
-    
+
     for (int i = 0; i < L; i++) {
 
         int k1 = mod(i - 2);
