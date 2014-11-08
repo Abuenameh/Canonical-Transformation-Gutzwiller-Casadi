@@ -301,8 +301,8 @@ int main(int argc, char** argv) {
     Ipopt::IpoptApplication app;
     app.PrintCopyrightMessage();
 
-    mt19937 rng;
-    uniform_real_distribution<> uni(-1, 1);
+    boost::random::mt19937 rng;
+    boost::random::uniform_real_distribution<> uni(-1, 1);
 
     int seed = lexical_cast<int>(argv[1]);
     int nseed = lexical_cast<int>(argv[2]);
