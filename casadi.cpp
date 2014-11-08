@@ -18,28 +18,9 @@ namespace casadi {
 //boost::mutex problem_mutex;
 
 GroundStateProblem::GroundStateProblem() {
-    {
-//        boost::mutex::scoped_lock lock(problem_mutex);
-//    cout << "Initializing" << endl;
-    
-//    {
-////        boost::mutex::scoped_lock lock(problem_mutex);
-//    x = SX::sym("x", 10);
-////    cout << x << endl;
-////    p = SX::sym("p", 1);
-//    }
         fin = SX::sym("f", 1, 1, 2*L*dim);
     dU = SX::sym("dU", 1, 1, L);
     J = SX::sym("J", 1, 1, L);
-    
-        for (int i = 0; i < L; i++) {
-            for (int n = 0; n <= nmax; n++) {
-//                fin.push_back(SX::sym(frinName(i, n)));
-//                fin.push_back(SX::sym(fiinName(i, n)));
-            }
-//            dU.push_back(SX::sym(dUName(i)));
-//            J.push_back(SX::sym(JName(i)));
-        }
         U0 = SX::sym("U0");
         mu = SX::sym("mu");
         theta = SX::sym("theta");
@@ -51,7 +32,7 @@ GroundStateProblem::GroundStateProblem() {
         params.push_back(mu);
         params.push_back(theta);
 
-        E = energy();
+        SX E = energy();
 
         x = SX::sym("x", fin.size());
         p = SX::sym("p", params.size());
@@ -69,17 +50,11 @@ GroundStateProblem::GroundStateProblem() {
         E = substitute(vector<SX>{E}, params, ps)[0];
         simplify(E);
 
-//        lb = DMatrix(x.size());
-        DMatrix lb(x.size());
-        lb.setAll(-1);
-//        ub = DMatrix(x.size());
-        DMatrix ub(x.size());
-        ub.setAll(1);
-//        x0 = DMatrix(x.size());
-        DMatrix x0(x.size());
-        x0.setAll(0.5);
+        DMatrix lb = DMatrix::repmat(-1, x.size());
+        DMatrix ub = DMatrix::repmat(1, x.size());
+        DMatrix x0 = DMatrix::repmat(0.5, x.size());
 
-        Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
+        SXFunction Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
 
         nlp = NlpSolver("ipopt", Ef);
 
@@ -95,17 +70,9 @@ GroundStateProblem::GroundStateProblem() {
         nlp.setInput(ub, "ubx");
         nlp.setInput(x0, "x0");
 
-    }
-//    cout << "Initialized" << endl;
 }
 
 void GroundStateProblem::setParameters(double U0, vector<double>& dU, vector<double>& J, double mu) {
-    //    vector<SX> subst;
-    //    subst.push_back(U0);
-    //    subst.insert(subst.end(), dU.begin(), dU.end());
-    //    subst.insert(subst.end(), J.begin(), J.end());
-    //    subst.push_back(mu);
-
     params.clear();
     params.push_back(U0);
     params.insert(params.end(), dU.begin(), dU.end());
@@ -164,38 +131,22 @@ SX GroundStateProblem::energy() {
     vector<complex<SX>* > f(L);
     vector<SX> norm2(L, 0);
     for (int i = 0; i < L; i++) {
-//    cout << "Here 1" << endl;
         f[i] = reinterpret_cast<complex<SX>*> (&fin[2 * i * dim]);
-//        f[i] = reinterpret_cast<complex<SX>*> (&x.data()[2 * i * dim]);
-//    cout << "Here 2" << endl;
         for (int n = 0; n <= nmax; n++) {
-//    cout << "Here 3: " << n << endl;
-//    cout << f[i][n] << endl;
-//    SX qwe = f[i][n].real();
-//    cout << qwe << endl;
             norm2[i] += f[i][n].real() * f[i][n].real() + f[i][n].imag() * f[i][n].imag();
         }
-//    cout << "Here 4" << endl;
     }
 
-    complex<SX> E;
-    //    E = 0;
-    E = complex<SX>(0, 0);
+    complex<SX> E = complex<SX>(0, 0);
 
     complex<SX> Ei, Ej1, Ej2, Ej1j2, Ej1k1, Ej2k2;
+    
     for (int i = 0; i < L; i++) {
 
         int k1 = mod(i - 2);
         int j1 = mod(i - 1);
         int j2 = mod(i + 1);
         int k2 = mod(i + 2);
-
-        //        Ei = 0;
-        //        Ej1 = 0;
-        //        Ej2 = 0;
-        //        Ej1j2 = 0;
-        //        Ej1k1 = 0;
-        //        Ej2k2 = 0;
 
         Ei = complex<SX>(0, 0);
         Ej1 = complex<SX>(0, 0);
@@ -207,7 +158,6 @@ SX GroundStateProblem::energy() {
         for (int n = 0; n <= nmax; n++) {
             Ei += (0.5 * (U0 + dU[i]) * n * (n - 1) - mu * n) * ~f[i][n] * f[i][n];
 
-            //#if 0
             if (n < nmax) {
                 Ej1 += -J[j1] * expth * g(n, n + 1) * ~f[i][n + 1] * ~f[j1][n]
                         * f[i][n] * f[j1][n + 1];
@@ -439,7 +389,6 @@ SX GroundStateProblem::energy() {
                     }
                 }
             }
-            //#endif
         }
 
         Ei /= norm2[i];

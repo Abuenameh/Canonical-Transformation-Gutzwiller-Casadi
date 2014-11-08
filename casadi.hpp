@@ -48,14 +48,10 @@ private:
     
     vector<double> params;
     
-//    DMatrix lb;
-//    DMatrix ub;
-//    DMatrix x0;
-    
-    SX E;
-    SX Eparams;
-    SX Etheta;
-    SXFunction Ef;
+//    SX E;
+//    SX Eparams;
+//    SX Etheta;
+//    SXFunction Ef;
     NlpSolver nlp;
     
     string status;

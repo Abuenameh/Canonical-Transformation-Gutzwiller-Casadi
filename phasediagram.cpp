@@ -98,75 +98,63 @@ struct PointResults {
 };
 
 vector<double> norm(vector<double>& x) {
-    const complex<double> * f[L];
+    vector<const complex<double>*> f(L);
     for (int i = 0; i < L; i++) {
-        f[i] = reinterpret_cast<const doublecomplex*> (&x[2 * i * dim]);
+        f[i] = reinterpret_cast<const complex<double>*> (&x[2 * i * dim]);
     }
 
-//    norms.resize(L);
-    
     vector<double> norms(L);
 
-    //    double norm = 1;
     for (int i = 0; i < L; i++) {
         double normi = 0;
         for (int n = 0; n <= nmax; n++) {
             normi += norm(f[i][n]);
         }
-        //        norm *= normi;
         norms[i] = sqrt(normi);
     }
-        return norms;
-//    return 0;
+    return norms;
 }
 
-void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, vector<PointResults>& pres, progress_display& progress) {
+void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<PointResults>& pres, progress_display& progress) {
 
     int ndim = 2 * L * dim;
 
     vector<double> x(ndim);
-    doublecomplex * f[L];
+    vector<complex<double>*> f(L);
     for (int i = 0; i < L; i++) {
-        f[i] = reinterpret_cast<doublecomplex*> (&x[2 * i * dim]);
+        f[i] = reinterpret_cast<complex<double>*> (&x[2 * i * dim]);
     }
 
     vector<double> U(L), J(L), dU(L);
 
     vector<double> x0(ndim), xth(ndim), x2th(ndim);
-    doublecomplex * f0[L];
+    vector<complex<double>*> f0(L);
     for (int i = 0; i < L; i++) {
-        f0[i] = reinterpret_cast<doublecomplex*> (&x0[2 * i * dim]);
+        f0[i] = reinterpret_cast<complex<double>*> (&x0[2 * i * dim]);
     }
 
-    vector<double> xabs(ndim / 2);
-    double* fabs[L];
-    for (int i = 0; i < L; i++) {
-        fabs[i] = &xabs[i * dim];
-    }
+    vector<vector<double> > fabs(L, vector<double>(dim));
 
     vector<double> fn0(L);
     vector<double> fmax(L);
 
     vector<double> norms(L);
 
-    double theta = pparms.theta;
+    double theta = params.theta;
 
     double scale = 1;
-    
-//    GroundStateProblem prob;
+
     GroundStateProblem* prob;
-    { 
+    {
         boost::mutex::scoped_lock lock(problem_mutex);
         prob = new GroundStateProblem();
-     }
+    }
 
     for (;;) {
         Point point;
         {
             boost::mutex::scoped_lock lock(points_mutex);
-//            cout << "Check points" << endl;
             if (points.empty()) {
-//                cout << "Points empty" << endl;
                 break;
             }
             point = points.front();
@@ -177,7 +165,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
         pointRes.W = point.x;
         pointRes.mu = point.mu;
 
-        double W[L];
+        vector<double> W(L);
         for (int i = 0; i < L; i++) {
             W[i] = xi[i] * point.x;
         }
@@ -190,60 +178,51 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
         pointRes.J = J;
         pointRes.U = U;
 
-//        prob.setParameters(U0, dU, J, point.mu / scale);
         prob->setParameters(U0, dU, J, point.mu / scale);
-        
-//        prob.setTheta(0);
+
         prob->setTheta(0);
-        
+
         double E0;
         try {
-//            E0 = prob.solve(x0);
             E0 = prob->solve(x0);
         } catch (std::exception& e) {
             printf("Ipopt failed for E0 at %f, %f\n", point.x, point.mu);
             cout << e.what() << endl;
             E0 = numeric_limits<double>::quiet_NaN();
         }
-//        pointRes.status0 = prob.getStatus();
         pointRes.status0 = prob->getStatus();
-//        pointRes.runtime0 = prob.getRuntime();
         pointRes.runtime0 = prob->getRuntime();
-        
+
         norms = norm(x0);
         for (int i = 0; i < L; i++) {
             for (int n = 0; n <= nmax; n++) {
                 x0[2 * (i * dim + n)] /= norms[i];
                 x0[2 * (i * dim + n) + 1] /= norms[i];
             }
-            transform(f0[i], f0[i] + dim, fabs[i], std::ptr_fun<const doublecomplex&, double>(abs));
-            fmax[i] = *max_element(fabs[i], fabs[i] + dim);
+            transform(f0[i], f0[i] + dim, fabs[i].begin(), std::ptr_fun<const complex<double>&, double>(abs));
+            fmax[i] = *max_element(fabs[i].begin(), fabs[i].end());
             fn0[i] = fabs[i][1];
         }
-        
+
         pointRes.fmin = *min_element(fn0.begin(), fn0.end());
         pointRes.fn0 = fn0;
         pointRes.fmax = fmax;
         pointRes.f0 = x0;
         pointRes.E0 = E0;
 
-//        prob.setTheta(theta);
         prob->setTheta(theta);
-        
+
         double Eth;
         try {
-//            Eth = prob.solve(xth);
             Eth = prob->solve(xth);
         } catch (std::exception& e) {
             printf("Ipopt failed for Eth at %f, %f\n", point.x, point.mu);
             cout << e.what() << endl;
             Eth = numeric_limits<double>::quiet_NaN();
         }
-//        pointRes.statusth = prob.getStatus();
         pointRes.statusth = prob->getStatus();
-//        pointRes.runtimeth = prob.getRuntime();
         pointRes.runtimeth = prob->getRuntime();
-        
+
         norms = norm(xth);
         for (int i = 0; i < L; i++) {
             for (int n = 0; n <= nmax; n++) {
@@ -251,27 +230,23 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
                 xth[2 * (i * dim + n) + 1] /= norms[i];
             }
         }
-            
+
         pointRes.fth = xth;
         pointRes.Eth = Eth;
 
-//        prob.setTheta(2*theta);
-        prob->setTheta(2*theta);
-        
+        prob->setTheta(2 * theta);
+
         double E2th;
         try {
-//            E2th = prob.solve(x2th);
             E2th = prob->solve(x2th);
         } catch (std::exception& e) {
             printf("Ipopt failed for E2th at %f, %f\n", point.x, point.mu);
             cout << e.what() << endl;
             E2th = numeric_limits<double>::quiet_NaN();
         }
-//        pointRes.status2th = prob.getStatus();
         pointRes.status2th = prob->getStatus();
-//        pointRes.runtime2th = prob.getRuntime();
         pointRes.runtime2th = prob->getRuntime();
-        
+
         norms = norm(x2th);
         for (int i = 0; i < L; i++) {
             for (int n = 0; n <= nmax; n++) {
@@ -279,7 +254,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
                 x2th[2 * (i * dim + n) + 1] /= norms[i];
             }
         }
-            
+
         pointRes.f2th = x2th;
         pointRes.E2th = E2th;
 
@@ -296,40 +271,37 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
         }
     }
 
-    { 
+    {
         boost::mutex::scoped_lock lock(problem_mutex);
         delete prob;
-     }
-    
-    //    cout << "Thread finished" << endl;
+    }
 
 }
 
-
 int main(int argc, char** argv) {
-//    GroundStateProblem prob;
-//
-////    cout << prob.getE() << endl;
-////    cout << prob.subst() << endl;
-//    vector<double> dU(L, 0);
-//    vector<double> J(L, 0.01);
-//    prob.setParameters(1, dU, J, 0.5);
-//    prob.setTheta(0);
-//    vector<double> f_(2*L*dim, 1);
-//    cout << ::math(prob.call(f_)) << endl;
-//    return 0;
-////    vector<double> f;
-//    vector<double> f;
-//    double E = prob.solve(f);
-////    prob.solve();
-//    cout << E << endl;
-//    cout << str(f) << endl;
-//    cout << prob.getEtheta() << endl;
-    
+    //    GroundStateProblem prob;
+    //
+    ////    cout << prob.getE() << endl;
+    ////    cout << prob.subst() << endl;
+    //    vector<double> dU(L, 0);
+    //    vector<double> J(L, 0.01);
+    //    prob.setParameters(1, dU, J, 0.5);
+    //    prob.setTheta(0);
+    //    vector<double> f_(2*L*dim, 1);
+    //    cout << ::math(prob.call(f_)) << endl;
+    //    return 0;
+    ////    vector<double> f;
+    //    vector<double> f;
+    //    double E = prob.solve(f);
+    ////    prob.solve();
+    //    cout << E << endl;
+    //    cout << str(f) << endl;
+    //    cout << prob.getEtheta() << endl;
+
     NlpSolver::loadPlugin("ipopt");
     Ipopt::IpoptApplication app;
     app.PrintCopyrightMessage();
-    
+
     mt19937 rng;
     uniform_real_distribution<> uni(-1, 1);
 
@@ -371,10 +343,6 @@ int main(int argc, char** argv) {
 
     int resi = lexical_cast<int>(argv[12]);
 
-    double Wthresh = lexical_cast<double>(argv[13]);
-
-    bool canonical = lexical_cast<bool>(argv[14]);
-
 #ifdef AMAZON
     //    path resdir("/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/Gutzwiller Phase Diagram");
     path resdir("/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/Canonical Transformation Gutzwiller");
@@ -408,77 +376,16 @@ int main(int argc, char** argv) {
 
         Parameter xi;
         xi.fill(1);
-        //        xi.assign(1);
+
         rng.seed(seed);
 
-        int xiset = 0;
-        double threshold = 0;
-
-        while (true) {
-            if (seed > -1) {
-                for (int j = 0; j < L; j++) {
-                    xi[j] = (1 + D * uni(rng));
-                }
+        if (seed > -1) {
+            for (int j = 0; j < L; j++) {
+                xi[j] = (1 + D * uni(rng));
             }
-
-            double W[L]; //, U[L], J[L];
-            vector<double> U(L), J(L);
-            for (int i = 0; i < L; i++) {
-                W[i] = xi[i] * Wthresh;
-            }
-            for (int i = 0; i < L; i++) {
-                U[i] = UW(W[i]) / UW(xmax);
-                J[i] = JWij(W[i], W[mod(i + 1)]) / UW(xmax);
-            }
-            bool reject = false;
-            //        for (int i = 0; i < L; i++) {
-            //            double threshold = 1.2*(JWij(xmax,xmax)/UW(xmax));
-            //                if (J[i]/U[i] > threshold || J[mod(i-1)]/U[i] > threshold) {
-            //                    iseed--;
-            //                    seed++;
-            //                    reject = true;
-            //                    break;
-            //                }
-            //        }
-            for (int i = 0; i < L; i++) {
-                U[i] = UW(W[i]) / UW(Wthresh);
-            }
-            for (int i = 0; i < L; i++) {
-                int j1 = mod(i - 1);
-                int j2 = mod(i + 1);
-                for (int n = 0; n < nmax; n++) {
-                    for (int m = 1; m <= nmax; m++) {
-                        if (n != m - 1) {
-                            if (fabs(eps(U, i, j1, n, m)) < threshold || fabs(eps(U, i, j2, n, m)) < threshold) {
-                                reject = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (reject) {
-                        break;
-                    }
-                }
-                if (reject) {
-                    break;
-                }
-            }
-            //        if (reject) {
-            //            iseed--;
-            //            seed++;
-            //            continue;
-            //        }
-            if (!reject) {
-                break;
-            }
-            xiset++;
         }
 
-//        int Lres = L;
-//        int nmaxres = nmax;
-
         boost::filesystem::ofstream os(resfile);
-        printMath(os, "canonical", resi, canonical);
         printMath(os, "Lres", resi, L);
         printMath(os, "nmaxres", resi, nmax);
         printMath(os, "seed", resi, seed);
@@ -487,8 +394,6 @@ int main(int argc, char** argv) {
         printMath(os, "xres", resi, x);
         printMath(os, "mures", resi, mu);
         printMath(os, "xires", resi, xi);
-        printMath(os, "xiset", resi, xiset);
-        printMath(os, "threshold", resi, threshold);
         os << flush;
 
         cout << "Res: " << resi << endl;
@@ -551,16 +456,15 @@ int main(int argc, char** argv) {
         }
         progress_display progress(points.size());
 
-        phase_parameters parms;
-        parms.theta = theta;
-        parms.canonical = canonical;
+        Parameters params;
+        params.theta = theta;
 
         vector<PointResults> pointRes;
 
         thread_group threads;
         for (int i = 0; i < numthreads; i++) {
             //                        threads.emplace_back(phasepoints, std::ref(xi), theta, std::ref(points), std::ref(f0res), std::ref(E0res), std::ref(Ethres), std::ref(fsres), std::ref(progress));
-            threads.create_thread(bind(&phasepoints, boost::ref(xi), parms, boost::ref(points), boost::ref(pointRes), boost::ref(progress)));
+            threads.create_thread(bind(&phasepoints, boost::ref(xi), params, boost::ref(points), boost::ref(pointRes), boost::ref(progress)));
         }
         threads.join_all();
 
@@ -584,9 +488,7 @@ int main(int argc, char** argv) {
         vector<string> runtimeth;
         vector<string> runtime2th;
 
-//        for (vector<PointResults>::iterator iter = pointRes.begin(); iter != pointRes.end(); ++iter) {
-//            PointResults pres = *iter;
-            for (PointResults pres : pointRes) {
+        for (PointResults pres : pointRes) {
             Wmu.push_back(make_pair(pres.W, pres.mu));
             Js.push_back(pres.J);
             Us.push_back(pres.U);
@@ -603,12 +505,9 @@ int main(int argc, char** argv) {
             status0.push_back(pres.status0);
             statusth.push_back(pres.statusth);
             status2th.push_back(pres.status2th);
-//            runtime0.push_back(pres.runtime0);
-//            runtimeth.push_back(pres.runtimeth);
-//            runtime2th.push_back(pres.runtime2th);
-            runtime0.push_back(to_simple_string(milliseconds(1000*pres.runtime0)));
-            runtimeth.push_back(to_simple_string(milliseconds(1000*pres.runtimeth)));
-            runtime2th.push_back(to_simple_string(milliseconds(1000*pres.runtime2th)));
+            runtime0.push_back(to_simple_string(milliseconds(1000 * pres.runtime0)));
+            runtimeth.push_back(to_simple_string(milliseconds(1000 * pres.runtimeth)));
+            runtime2th.push_back(to_simple_string(milliseconds(1000 * pres.runtime2th)));
         }
 
         printMath(os, "Wmu", resi, Wmu);
