@@ -15,6 +15,8 @@ using namespace boost::random;
 using namespace boost::filesystem;
 using namespace boost::posix_time;
 
+#include <coin/IpIpoptApplication.hpp>
+
 #include "casadi.hpp"
 #include "gutzwiller.hpp"
 #include "mathematica.hpp"
@@ -65,6 +67,7 @@ Parameter UW(Parameter W) {
 
 boost::mutex progress_mutex;
 boost::mutex points_mutex;
+boost::mutex problem_mutex;
 
 struct Point {
     double x;
@@ -86,6 +89,12 @@ struct PointResults {
     vector<double> f0;
     vector<double> fth;
     vector<double> f2th;
+    string status0;
+    string statusth;
+    string status2th;
+    double runtime0;
+    double runtimeth;
+    double runtime2th;
 };
 
 vector<double> norm(vector<double>& x) {
@@ -144,13 +153,20 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
 
     double scale = 1;
     
-    GroundStateProblem prob;
+//    GroundStateProblem prob;
+    GroundStateProblem* prob;
+    { 
+        boost::mutex::scoped_lock lock(problem_mutex);
+        prob = new GroundStateProblem();
+     }
 
     for (;;) {
         Point point;
         {
             boost::mutex::scoped_lock lock(points_mutex);
+//            cout << "Check points" << endl;
             if (points.empty()) {
+//                cout << "Points empty" << endl;
                 break;
             }
             point = points.front();
@@ -174,18 +190,25 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
         pointRes.J = J;
         pointRes.U = U;
 
-        prob.setParameters(U0, dU, J, point.mu / scale);
+//        prob.setParameters(U0, dU, J, point.mu / scale);
+        prob->setParameters(U0, dU, J, point.mu / scale);
         
-        prob.setTheta(0);
+//        prob.setTheta(0);
+        prob->setTheta(0);
         
         double E0;
         try {
-            E0 = prob.solve(x0);
+//            E0 = prob.solve(x0);
+            E0 = prob->solve(x0);
         } catch (std::exception& e) {
             printf("Ipopt failed for E0 at %f, %f\n", point.x, point.mu);
             cout << e.what() << endl;
             E0 = numeric_limits<double>::quiet_NaN();
         }
+//        pointRes.status0 = prob.getStatus();
+        pointRes.status0 = prob->getStatus();
+//        pointRes.runtime0 = prob.getRuntime();
+        pointRes.runtime0 = prob->getRuntime();
         
         norms = norm(x0);
         for (int i = 0; i < L; i++) {
@@ -204,16 +227,22 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
         pointRes.f0 = x0;
         pointRes.E0 = E0;
 
-        prob.setTheta(theta);
+//        prob.setTheta(theta);
+        prob->setTheta(theta);
         
         double Eth;
         try {
-            Eth = prob.solve(xth);
+//            Eth = prob.solve(xth);
+            Eth = prob->solve(xth);
         } catch (std::exception& e) {
             printf("Ipopt failed for Eth at %f, %f\n", point.x, point.mu);
             cout << e.what() << endl;
             Eth = numeric_limits<double>::quiet_NaN();
         }
+//        pointRes.statusth = prob.getStatus();
+        pointRes.statusth = prob->getStatus();
+//        pointRes.runtimeth = prob.getRuntime();
+        pointRes.runtimeth = prob->getRuntime();
         
         norms = norm(xth);
         for (int i = 0; i < L; i++) {
@@ -226,16 +255,22 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
         pointRes.fth = xth;
         pointRes.Eth = Eth;
 
-        prob.setTheta(2*theta);
+//        prob.setTheta(2*theta);
+        prob->setTheta(2*theta);
         
         double E2th;
         try {
-            E2th = prob.solve(x2th);
+//            E2th = prob.solve(x2th);
+            E2th = prob->solve(x2th);
         } catch (std::exception& e) {
             printf("Ipopt failed for E2th at %f, %f\n", point.x, point.mu);
             cout << e.what() << endl;
             E2th = numeric_limits<double>::quiet_NaN();
         }
+//        pointRes.status2th = prob.getStatus();
+        pointRes.status2th = prob->getStatus();
+//        pointRes.runtime2th = prob.getRuntime();
+        pointRes.runtime2th = prob->getRuntime();
         
         norms = norm(x2th);
         for (int i = 0; i < L; i++) {
@@ -261,11 +296,18 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, v
         }
     }
 
+    { 
+        boost::mutex::scoped_lock lock(problem_mutex);
+        delete prob;
+     }
+    
+    //    cout << "Thread finished" << endl;
+
 }
 
 
 int main(int argc, char** argv) {
-    GroundStateProblem prob;
+//    GroundStateProblem prob;
 //
 ////    cout << prob.getE() << endl;
 ////    cout << prob.subst() << endl;
@@ -284,7 +326,10 @@ int main(int argc, char** argv) {
 //    cout << str(f) << endl;
 //    cout << prob.getEtheta() << endl;
     
-
+    NlpSolver::loadPlugin("ipopt");
+    Ipopt::IpoptApplication app;
+    app.PrintCopyrightMessage();
+    
     mt19937 rng;
     uniform_real_distribution<> uni(-1, 1);
 
@@ -450,7 +495,7 @@ int main(int argc, char** argv) {
 
         double muwidth = 0.1;
         queue<Point> points;
-        bool sample = true;
+        bool sample = false;
         if (sample) {
             for (int ix = 0; ix < nx; ix++) {
                 //            double mu0 = x[ix] / 1e12 + 0.05;
@@ -532,6 +577,12 @@ int main(int argc, char** argv) {
         vector<double> E0;
         vector<double> Eth;
         vector<double> E2th;
+        vector<string> status0;
+        vector<string> statusth;
+        vector<string> status2th;
+        vector<string> runtime0;
+        vector<string> runtimeth;
+        vector<string> runtime2th;
 
 //        for (vector<PointResults>::iterator iter = pointRes.begin(); iter != pointRes.end(); ++iter) {
 //            PointResults pres = *iter;
@@ -549,6 +600,15 @@ int main(int argc, char** argv) {
             E0.push_back(pres.E0);
             Eth.push_back(pres.Eth);
             E2th.push_back(pres.E2th);
+            status0.push_back(pres.status0);
+            statusth.push_back(pres.statusth);
+            status2th.push_back(pres.status2th);
+//            runtime0.push_back(pres.runtime0);
+//            runtimeth.push_back(pres.runtimeth);
+//            runtime2th.push_back(pres.runtime2th);
+            runtime0.push_back(to_simple_string(milliseconds(1000*pres.runtime0)));
+            runtimeth.push_back(to_simple_string(milliseconds(1000*pres.runtimeth)));
+            runtime2th.push_back(to_simple_string(milliseconds(1000*pres.runtime2th)));
         }
 
         printMath(os, "Wmu", resi, Wmu);
@@ -564,6 +624,12 @@ int main(int argc, char** argv) {
         printMath(os, "E0", resi, E0);
         printMath(os, "Eth", resi, Eth);
         printMath(os, "E2th", resi, E2th);
+        printMath(os, "status0", resi, status0);
+        printMath(os, "statusth", resi, statusth);
+        printMath(os, "status2th", resi, status2th);
+        printMath(os, "runtime0", resi, runtime0);
+        printMath(os, "runtimeth", resi, runtimeth);
+        printMath(os, "runtime2th", resi, runtime2th);
 
         ptime end = microsec_clock::local_time();
         time_period period(begin, end);

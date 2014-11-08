@@ -22,23 +22,21 @@ public:
     
     double solve(vector<double>& f);
     
-    double call(vector<double>& f);
+    string& getStatus() { return status; }
+    double getRuntime() { return runtime; }
     
-    SX& getE() { return E; }
-    SX subst();
-    SX& getEtheta() { return Etheta; }
+//    double call(vector<double>& f);
     
 private:
-    string frinName(int i, int n) { return "fr[" + to_string(i) + "][" + to_string(n) + "]"; }
-    string fiinName(int i, int n) { return "fi[" + to_string(i) + "][" + to_string(n) + "]"; }
-    string UName(int i) { return "U[" + to_string(i) + "]"; }
-    string dUName(int i) { return "dU[" + to_string(i) + "]"; }
-    string JName(int i) { return "J[" + to_string(i) + "]"; }
+//    string frinName(int i, int n) { return "fr[" + to_string(i) + "][" + to_string(n) + "]"; }
+//    string fiinName(int i, int n) { return "fi[" + to_string(i) + "][" + to_string(n) + "]"; }
+//    string UName(int i) { return "U[" + to_string(i) + "]"; }
+//    string dUName(int i) { return "dU[" + to_string(i) + "]"; }
+//    string JName(int i) { return "J[" + to_string(i) + "]"; }
     
     SX energy();
     
     vector<SX> fin;
-//    vector<SX> U;
     SX U0;
     vector<SX> dU;
     vector<SX> J;
@@ -48,18 +46,20 @@ private:
     SX x;
     SX p;
     
-//    vector<SX> params;
     vector<double> params;
     
-    DMatrix lb;
-    DMatrix ub;
-    DMatrix x0;
+//    DMatrix lb;
+//    DMatrix ub;
+//    DMatrix x0;
     
     SX E;
     SX Eparams;
     SX Etheta;
     SXFunction Ef;
     NlpSolver nlp;
+    
+    string status;
+    double runtime;
 };
 
 

@@ -15,18 +15,30 @@ namespace casadi {
     }
 }
 
-boost::mutex problem_mutex;
+//boost::mutex problem_mutex;
 
 GroundStateProblem::GroundStateProblem() {
     {
-        boost::mutex::scoped_lock lock(problem_mutex);
+//        boost::mutex::scoped_lock lock(problem_mutex);
+//    cout << "Initializing" << endl;
+    
+//    {
+////        boost::mutex::scoped_lock lock(problem_mutex);
+//    x = SX::sym("x", 10);
+////    cout << x << endl;
+////    p = SX::sym("p", 1);
+//    }
+        fin = SX::sym("f", 1, 1, 2*L*dim);
+    dU = SX::sym("dU", 1, 1, L);
+    J = SX::sym("J", 1, 1, L);
+    
         for (int i = 0; i < L; i++) {
             for (int n = 0; n <= nmax; n++) {
-                fin.push_back(SX::sym(frinName(i, n)));
-                fin.push_back(SX::sym(fiinName(i, n)));
+//                fin.push_back(SX::sym(frinName(i, n)));
+//                fin.push_back(SX::sym(fiinName(i, n)));
             }
-            dU.push_back(SX::sym(dUName(i)));
-            J.push_back(SX::sym(JName(i)));
+//            dU.push_back(SX::sym(dUName(i)));
+//            J.push_back(SX::sym(JName(i)));
         }
         U0 = SX::sym("U0");
         mu = SX::sym("mu");
@@ -57,11 +69,14 @@ GroundStateProblem::GroundStateProblem() {
         E = substitute(vector<SX>{E}, params, ps)[0];
         simplify(E);
 
-        lb = DMatrix(x.size());
+//        lb = DMatrix(x.size());
+        DMatrix lb(x.size());
         lb.setAll(-1);
-        ub = DMatrix(x.size());
+//        ub = DMatrix(x.size());
+        DMatrix ub(x.size());
         ub.setAll(1);
-        x0 = DMatrix(x.size());
+//        x0 = DMatrix(x.size());
+        DMatrix x0(x.size());
         x0.setAll(0.5);
 
         Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
@@ -81,6 +96,7 @@ GroundStateProblem::GroundStateProblem() {
         nlp.setInput(x0, "x0");
 
     }
+//    cout << "Initialized" << endl;
 }
 
 void GroundStateProblem::setParameters(double U0, vector<double>& dU, vector<double>& J, double mu) {
@@ -102,56 +118,40 @@ void GroundStateProblem::setTheta(double theta) {
     params.back() = theta;
 }
 
-double GroundStateProblem::call(vector<double>& f) {
-    SX E2 = E;
-    vector<SX> farg(2);
-    farg[0] = SX::zeros(f.size());
-    for (int i = 0; i < f.size(); i++) {
-        farg[0].at(i) = f[i];
-    }
-    farg[1] = SX::zeros(params.size());
-    for (int i = 0; i < params.size(); i++) {
-        farg[1].at(i) = params[i];
-    }
-    //    for (double fin : f) {
-    //        farg.push_back(fin);
-    //    }
-    SXFunction Efunc = SXFunction(vector<SX>{x, p}, E);
-    Efunc.init();
-    return Efunc(farg)[0].getValue();
-}
+//double GroundStateProblem::call(vector<double>& f) {
+//    SX E2 = E;
+//    vector<SX> farg(2);
+//    farg[0] = SX::zeros(f.size());
+//    for (int i = 0; i < f.size(); i++) {
+//        farg[0].at(i) = f[i];
+//    }
+//    farg[1] = SX::zeros(params.size());
+//    for (int i = 0; i < params.size(); i++) {
+//        farg[1].at(i) = params[i];
+//    }
+//    //    for (double fin : f) {
+//    //        farg.push_back(fin);
+//    //    }
+//    SXFunction Efunc = SXFunction(vector<SX>{x, p}, E);
+//    Efunc.init();
+//    return Efunc(farg)[0].getValue();
+//}
 
 double GroundStateProblem::solve(vector<double>& f) {
-    //    Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
-    //
-    //    nlp = NlpSolver("ipopt", Ef);
-    //
-    //    nlp.setOption("verbose", false);
-    //    nlp.setOption("print_level", 0);
-    //    nlp.setOption("print_time", 0);
-    //    nlp.setOption("linear_solver", "ma27");
-    //    nlp.setOption("hessian_approximation", "limited-memory");
-    //
-    //    nlp.init();
-    //
-    //    nlp.setInput(lb, "lbx");
-    //    nlp.setInput(ub, "ubx");
-    //    nlp.setInput(x0, "x0");
-
     nlp.setInput(params, "p");
 
     nlp.evaluate();
+    
+    Dictionary& stats = const_cast<Dictionary&>(nlp.getStats());
+    status = stats["return_status"].toString();
+    runtime = stats["t_mainloop"].toDouble();
 
     DMatrix xout = nlp.output("x");
     f.resize(xout.size());
     for (int i = 0; i < xout.size(); i++) {
         f[i] = xout.at(i);
     }
-    //    f = nlp.output("x");
     return nlp.output("f").getValue();
-
-    //    cout << str(nlp.output("f")) << endl;
-    //    cout << str(nlp.output("x")) << endl;
 }
 
 SX GroundStateProblem::energy() {
@@ -164,10 +164,18 @@ SX GroundStateProblem::energy() {
     vector<complex<SX>* > f(L);
     vector<SX> norm2(L, 0);
     for (int i = 0; i < L; i++) {
+//    cout << "Here 1" << endl;
         f[i] = reinterpret_cast<complex<SX>*> (&fin[2 * i * dim]);
+//        f[i] = reinterpret_cast<complex<SX>*> (&x.data()[2 * i * dim]);
+//    cout << "Here 2" << endl;
         for (int n = 0; n <= nmax; n++) {
+//    cout << "Here 3: " << n << endl;
+//    cout << f[i][n] << endl;
+//    SX qwe = f[i][n].real();
+//    cout << qwe << endl;
             norm2[i] += f[i][n].real() * f[i][n].real() + f[i][n].imag() * f[i][n].imag();
         }
+//    cout << "Here 4" << endl;
     }
 
     complex<SX> E;
