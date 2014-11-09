@@ -29,20 +29,12 @@ public:
     double E(const vector<double>& f, vector<double>& grad);
     
     string& getStatus() { return status; }
-//    double getRuntime() { return runtime; }
     string getRuntime();
     
     void start() { start_time = microsec_clock::local_time(); }
     void stop() { stop_time = microsec_clock::local_time(); }
     
-//    double call(vector<double>& f);
-    
 private:
-//    string frinName(int i, int n) { return "fr[" + to_string(i) + "][" + to_string(n) + "]"; }
-//    string fiinName(int i, int n) { return "fi[" + to_string(i) + "][" + to_string(n) + "]"; }
-//    string UName(int i) { return "U[" + to_string(i) + "]"; }
-//    string dUName(int i) { return "dU[" + to_string(i) + "]"; }
-//    string JName(int i) { return "J[" + to_string(i) + "]"; }
     
     ptime start_time;
     ptime stop_time;
@@ -60,11 +52,7 @@ private:
     SX p;
     
     vector<double> params;
-    vector<SX> paramsx;
     
-//    SX E;
-//    SX Eparams;
-//    SX Etheta;
     SXFunction Ef;
     Function Egradf;
     NlpSolver nlp;

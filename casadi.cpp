@@ -5,7 +5,7 @@ using namespace boost;
 #include "casadi.hpp"
 
 double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
-    GroundStateProblem* prob = static_cast<GroundStateProblem*>(data);
+    GroundStateProblem* prob = static_cast<GroundStateProblem*> (data);
     return prob->E(x, grad);
 }
 
@@ -59,10 +59,10 @@ GroundStateProblem::GroundStateProblem() {
     DMatrix ub = DMatrix::repmat(1, x.size());
     DMatrix x0 = DMatrix::repmat(0.5, x.size());
 
-    /*SXFunction*/ Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
-                   Ef.init();
-                   Egradf = Ef.gradient(NL_X, NL_F);
-                   Egradf.init();
+    Ef = SXFunction(nlpIn("x", x, "p", p), nlpOut("f", E));
+    Ef.init();
+    Egradf = Ef.gradient(NL_X, NL_F);
+    Egradf.init();
 
     nlp = NlpSolver("ipopt", Ef);
 
@@ -70,14 +70,14 @@ GroundStateProblem::GroundStateProblem() {
     nlp.setOption("verbose", false);
     nlp.setOption("print_level", 0);
     nlp.setOption("print_time", 0);
-//    nlp.setOption("acceptable_tol", 1e-5);
-//    nlp.setOption("linear_solver", "ma57");
-//    nlp.setOption("ma57_automatic_scaling", "yes");
-//    nlp.setOption("ma57_small_pivot_flag", 1);
+    //    nlp.setOption("acceptable_tol", 1e-5);
+    //    nlp.setOption("linear_solver", "ma57");
+    //    nlp.setOption("ma57_automatic_scaling", "yes");
+    //    nlp.setOption("ma57_small_pivot_flag", 1);
     nlp.setOption("hessian_approximation", "limited-memory");
-//    nlp.setOption("check_derivatives_for_naninf", "yes");
-//    nlp.setOption("ma57_automatic_scaling", "no");
-//    nlp.setOption("monitor", vector<string>{"eval_f"});
+    //    nlp.setOption("check_derivatives_for_naninf", "yes");
+    //    nlp.setOption("ma57_automatic_scaling", "no");
+    //    nlp.setOption("monitor", vector<string>{"eval_f"});
 
     nlp.init();
 
@@ -93,20 +93,6 @@ string GroundStateProblem::getRuntime() {
 }
 
 double GroundStateProblem::E(const vector<double>& f, vector<double>& grad) {
-//    vector<SX> Eargs(2);
-//    Eargs[0] = SX::zeros(f.size());
-//    for (int i = 0; i < f.size(); i++) {
-//        Eargs[0].at(i) = f[i];
-//    }
-//    Eargs[1] = SX::zeros(params.size());
-//    for (int i = 0; i < params.size(); i++) {
-//        Eargs[1].at(i) = params[i];
-//    }
-//    double E = Ef(Eargs)[0].getValue();
-//    vector<SX> Egrad = Egradf(Eargs);
-//    for (int i = 0; i < Egrad[0].size(); i++) {
-//        grad[i] = Egrad[0].at(i).getValue();
-//    }
     double E = 0;
     Ef.setInput(f.data(), NL_X);
     Ef.setInput(params.data(), NL_P);
@@ -116,7 +102,6 @@ double GroundStateProblem::E(const vector<double>& f, vector<double>& grad) {
     Egradf.setInput(params.data(), NL_P);
     Egradf.evaluate();
     Egradf.output().getArray(grad.data(), grad.size(), DENSE);
-//    cout << setprecision(20) << E << endl;
     return E;
 }
 
@@ -127,37 +112,11 @@ void GroundStateProblem::setParameters(double U0, vector<double>& dU, vector<dou
     params.insert(params.end(), J.begin(), J.end());
     params.push_back(mu);
     params.push_back(0);
-
-//    paramsx.clear();
-//    paramsx.push_back(U0);
-//    paramsx.insert(params.end(), dU.begin(), dU.end());
-//    paramsx.insert(params.end(), J.begin(), J.end());
-//    paramsx.push_back(mu);
-//    paramsx.push_back(0);
 }
 
 void GroundStateProblem::setTheta(double theta) {
     params.back() = theta;
 }
-
-//double GroundStateProblem::call(vector<double>& f) {
-//    SX E2 = E;
-//    vector<SX> farg(2);
-//    farg[0] = SX::zeros(f.size());
-//    for (int i = 0; i < f.size(); i++) {
-//        farg[0].at(i) = f[i];
-//    }
-//    farg[1] = SX::zeros(params.size());
-//    for (int i = 0; i < params.size(); i++) {
-//        farg[1].at(i) = params[i];
-//    }
-//    //    for (double fin : f) {
-//    //        farg.push_back(fin);
-//    //    }
-//    SXFunction Efunc = SXFunction(vector<SX>{x, p}, E);
-//    Efunc.init();
-//    return Efunc(farg)[0].getValue();
-//}
 
 double GroundStateProblem::solve(vector<double>& f) {
     nlp.setInput(params, "p");
