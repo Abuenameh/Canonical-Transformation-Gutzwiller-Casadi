@@ -12,6 +12,10 @@
 
 using namespace casadi;
 
+#include <boost/date_time.hpp>
+
+using namespace boost::posix_time;
+
 #include "gutzwiller.hpp"
 
 class GroundStateProblem {
@@ -22,8 +26,14 @@ public:
     
     double solve(vector<double>& f);
     
+    double E(const vector<double>& f, vector<double>& grad);
+    
     string& getStatus() { return status; }
-    double getRuntime() { return runtime; }
+//    double getRuntime() { return runtime; }
+    string getRuntime();
+    
+    void start() { start_time = microsec_clock::local_time(); }
+    void stop() { stop_time = microsec_clock::local_time(); }
     
 //    double call(vector<double>& f);
     
@@ -33,6 +43,9 @@ private:
 //    string UName(int i) { return "U[" + to_string(i) + "]"; }
 //    string dUName(int i) { return "dU[" + to_string(i) + "]"; }
 //    string JName(int i) { return "J[" + to_string(i) + "]"; }
+    
+    ptime start_time;
+    ptime stop_time;
     
     SX energy();
     
@@ -47,18 +60,20 @@ private:
     SX p;
     
     vector<double> params;
+    vector<SX> paramsx;
     
 //    SX E;
 //    SX Eparams;
 //    SX Etheta;
-//    SXFunction Ef;
+    SXFunction Ef;
+    Function Egradf;
     NlpSolver nlp;
     
     string status;
     double runtime;
 };
 
-
+double energyfunc(const vector<double>& x, vector<double>& grad, void *data);
 
 #endif	/* CASADI_HPP */
 
