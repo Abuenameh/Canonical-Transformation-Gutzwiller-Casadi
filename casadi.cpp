@@ -58,11 +58,17 @@ GroundStateProblem::GroundStateProblem() {
 
     nlp = NlpSolver("ipopt", Ef);
 
+    nlp.setOption("sb", "yes");
     nlp.setOption("verbose", false);
     nlp.setOption("print_level", 0);
     nlp.setOption("print_time", 0);
+//    nlp.setOption("acceptable_tol", 1e-5);
     nlp.setOption("linear_solver", "ma57");
+//    nlp.setOption("ma57_automatic_scaling", "yes");
+//    nlp.setOption("ma57_small_pivot_flag", 1);
     nlp.setOption("hessian_approximation", "limited-memory");
+//    nlp.setOption("check_derivatives_for_naninf", "yes");
+//    nlp.setOption("ma57_automatic_scaling", "no");
 
     nlp.init();
 

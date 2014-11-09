@@ -298,8 +298,8 @@ int main(int argc, char** argv) {
     //    cout << str(f) << endl;
     //    cout << prob.getEtheta() << endl;
 
-    Ipopt::IpoptApplication app;
-    app.PrintCopyrightMessage();
+//    Ipopt::IpoptApplication app;
+//    app.PrintCopyrightMessage();
 
     boost::random::mt19937 rng;
     boost::random::uniform_real_distribution<> uni(-1, 1);
