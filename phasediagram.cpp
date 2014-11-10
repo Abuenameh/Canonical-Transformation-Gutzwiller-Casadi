@@ -99,6 +99,7 @@ struct PointResults {
     string runtime0;
     string runtimeth;
     string runtime2th;
+    double theta;
     //    double runtime0;
     //    double runtimeth;
     //    double runtime2th;
@@ -315,6 +316,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
                 theta *= 0.6309573444801932;
             }
         }
+        pointRes.theta = theta;
 
         {
             boost::mutex::scoped_lock lock(points_mutex);
@@ -548,6 +550,7 @@ int main(int argc, char** argv) {
         vector<string> runtime0;
         vector<string> runtimeth;
         vector<string> runtime2th;
+        vector<double> thetas;
 
         for (PointResults pres : pointRes) {
             Wmu.push_back(make_pair(pres.W, pres.mu));
@@ -569,6 +572,7 @@ int main(int argc, char** argv) {
             runtime0.push_back(pres.runtime0);
             runtimeth.push_back(pres.runtimeth);
             runtime2th.push_back(pres.runtime2th);
+            thetas.push_back(pres.theta);
             //            runtime0.push_back(to_simple_string(milliseconds(1000 * pres.runtime0)));
             //            runtimeth.push_back(to_simple_string(milliseconds(1000 * pres.runtimeth)));
             //            runtime2th.push_back(to_simple_string(milliseconds(1000 * pres.runtime2th)));
@@ -593,6 +597,7 @@ int main(int argc, char** argv) {
         printMath(os, "runtime0", resi, runtime0);
         printMath(os, "runtimeth", resi, runtimeth);
         printMath(os, "runtime2th", resi, runtime2th);
+        printMath(os, "thetas", resi, thetas);
 
         ptime end = microsec_clock::local_time();
         time_period period(begin, end);
