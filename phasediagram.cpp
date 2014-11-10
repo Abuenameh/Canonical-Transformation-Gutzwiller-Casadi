@@ -240,7 +240,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
         theta = params.theta;
 
-        for (int thi = 0; thi < 5; thi++) {
+        for (int thi = 0; thi < 3; thi++) {
 
             prob->setTheta(theta);
 
@@ -313,7 +313,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             if (pointRes.fs > -1e-5) {
                 break;
             } else {
-                theta *= 0.6309573444801932;
+                theta *= 0.4641588833612779;
             }
         }
         pointRes.theta = theta;
