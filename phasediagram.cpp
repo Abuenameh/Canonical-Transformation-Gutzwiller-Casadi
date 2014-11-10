@@ -161,13 +161,15 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
     GroundStateProblem* prob;
     opt lopt(LD_LBFGS, ndim);
+//    opt lopt(GN_DIRECT, ndim);
     {
         boost::mutex::scoped_lock lock(problem_mutex);
         prob = new GroundStateProblem();
 
         lopt.set_lower_bounds(-1);
-        lopt.set_upper_bounds(1);
+        lopt.set_upper_bounds(1.1);
         lopt.set_min_objective(energyfunc, prob);
+//        lopt.set_maxtime(120);
 //        lopt.set_ftol_abs(1e-17);
 //        lopt.set_ftol_rel(1e-17);
     }
@@ -209,7 +211,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
         prob->setParameters(U0, dU, J, point.mu / scale);
 
-        for (int thi = 0; thi < 10; thi++) {
+        for (int thi = 0; thi < 1; thi++) {
 
         generate(x0.begin(), x0.end(), randx);
         generate(xth.begin(), xth.end(), randx);
