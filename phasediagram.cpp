@@ -256,12 +256,14 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
         theta = params.theta;
 
+        double count = 0;
         for (int j = 0; j < 2; j++) {
+            count = j;
 
             //        for (int thi = 0; thi < 10; thi++) {
 
-            //        generate(xth.begin(), xth.end(), randx);
-            //        generate(x2th.begin(), x2th.end(), randx);
+//                    generate(xth.begin(), xth.end(), randx);
+//                    generate(x2th.begin(), x2th.end(), randx);
 
             if (j == 1) {
                 copy(x0.begin(), x0.end(), xth.begin());
@@ -342,7 +344,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
                 //                theta *= 0.4641588833612779;
             }
         }
-        pointRes.theta = theta;
+        pointRes.theta = count;//theta;
 
         {
             boost::mutex::scoped_lock lock(points_mutex);
