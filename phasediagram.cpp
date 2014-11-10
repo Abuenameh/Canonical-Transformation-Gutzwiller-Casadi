@@ -99,9 +99,9 @@ struct PointResults {
     string runtime0;
     string runtimeth;
     string runtime2th;
-//    double runtime0;
-//    double runtimeth;
-//    double runtime2th;
+    //    double runtime0;
+    //    double runtimeth;
+    //    double runtime2th;
 };
 
 vector<double> norm(vector<double>& x) {
@@ -217,7 +217,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             E0 = numeric_limits<double>::quiet_NaN();
         }
         pointRes.status0 = result0;
-//        pointRes.status0 = prob->getStatus();
+        //        pointRes.status0 = prob->getStatus();
         pointRes.runtime0 = prob->getRuntime();
 
         norms = norm(x0);
@@ -237,73 +237,84 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         pointRes.f0 = x0;
         pointRes.E0 = E0;
 
-        prob->setTheta(theta);
+        theta = params.theta;
 
-        double Eth;
-        string resultth;
-        try {
-            prob->start();
-            result res = lopt.optimize(xth, Eth);
-            prob->stop();
-            resultth = to_string(res);
-            //            Eth = prob->solve(xth);
-        } catch (std::exception& e) {
-            prob->stop();
-            result res = lopt.last_optimize_result();
-            resultth = to_string(res) + ": " + e.what();
-            printf("Ipopt failed for Eth at %f, %f\n", point.x, point.mu);
-            cout << e.what() << endl;
-            Eth = numeric_limits<double>::quiet_NaN();
-        }
-        pointRes.statusth = resultth;
-//        pointRes.statusth = prob->getStatus();
-        pointRes.runtimeth = prob->getRuntime();
+        for (int thi = 0; thi < 5; thi++) {
 
-        norms = norm(xth);
-        for (int i = 0; i < L; i++) {
-            for (int n = 0; n <= nmax; n++) {
-                xth[2 * (i * dim + n)] /= norms[i];
-                xth[2 * (i * dim + n) + 1] /= norms[i];
+            prob->setTheta(theta);
+
+            double Eth;
+            string resultth;
+            try {
+                prob->start();
+                result res = lopt.optimize(xth, Eth);
+                prob->stop();
+                resultth = to_string(res);
+                //            Eth = prob->solve(xth);
+            } catch (std::exception& e) {
+                prob->stop();
+                result res = lopt.last_optimize_result();
+                resultth = to_string(res) + ": " + e.what();
+                printf("Ipopt failed for Eth at %f, %f\n", point.x, point.mu);
+                cout << e.what() << endl;
+                Eth = numeric_limits<double>::quiet_NaN();
+            }
+            pointRes.statusth = resultth;
+            //        pointRes.statusth = prob->getStatus();
+            pointRes.runtimeth = prob->getRuntime();
+
+            norms = norm(xth);
+            for (int i = 0; i < L; i++) {
+                for (int n = 0; n <= nmax; n++) {
+                    xth[2 * (i * dim + n)] /= norms[i];
+                    xth[2 * (i * dim + n) + 1] /= norms[i];
+                }
+            }
+
+            pointRes.fth = xth;
+            pointRes.Eth = Eth;
+
+            prob->setTheta(2 * theta);
+
+            double E2th;
+            string result2th;
+            try {
+                prob->start();
+                result res = lopt.optimize(x2th, E2th);
+                prob->stop();
+                result2th = to_string(res);
+                //            E2th = prob->solve(x2th);
+            } catch (std::exception& e) {
+                prob->stop();
+                result res = lopt.last_optimize_result();
+                result2th = to_string(res) + ": " + e.what();
+                printf("Ipopt failed for E2th at %f, %f\n", point.x, point.mu);
+                cout << e.what() << endl;
+                E2th = numeric_limits<double>::quiet_NaN();
+            }
+            pointRes.status2th = result2th;
+            //        pointRes.status2th = prob->getStatus();
+            pointRes.runtime2th = prob->getRuntime();
+
+            norms = norm(x2th);
+            for (int i = 0; i < L; i++) {
+                for (int n = 0; n <= nmax; n++) {
+                    x2th[2 * (i * dim + n)] /= norms[i];
+                    x2th[2 * (i * dim + n) + 1] /= norms[i];
+                }
+            }
+
+            pointRes.f2th = x2th;
+            pointRes.E2th = E2th;
+
+            pointRes.fs = (E2th - 2 * Eth + E0) / (L * theta * theta);
+
+            if (pointRes.fs > -1e-5) {
+                break;
+            } else {
+                theta *= 0.6309573444801932;
             }
         }
-
-        pointRes.fth = xth;
-        pointRes.Eth = Eth;
-
-        prob->setTheta(2 * theta);
-
-        double E2th;
-        string result2th;
-        try {
-            prob->start();
-            result res = lopt.optimize(x2th, E2th);
-            prob->stop();
-            result2th = to_string(res);
-            //            E2th = prob->solve(x2th);
-        } catch (std::exception& e) {
-            prob->stop();
-            result res = lopt.last_optimize_result();
-            result2th = to_string(res) + ": " + e.what();
-            printf("Ipopt failed for E2th at %f, %f\n", point.x, point.mu);
-            cout << e.what() << endl;
-            E2th = numeric_limits<double>::quiet_NaN();
-        }
-        pointRes.status2th = result2th;
-//        pointRes.status2th = prob->getStatus();
-        pointRes.runtime2th = prob->getRuntime();
-
-        norms = norm(x2th);
-        for (int i = 0; i < L; i++) {
-            for (int n = 0; n <= nmax; n++) {
-                x2th[2 * (i * dim + n)] /= norms[i];
-                x2th[2 * (i * dim + n) + 1] /= norms[i];
-            }
-        }
-
-        pointRes.f2th = x2th;
-        pointRes.E2th = E2th;
-
-        pointRes.fs = (E2th - 2 * Eth + E0) / (L * theta * theta);
 
         {
             boost::mutex::scoped_lock lock(points_mutex);
@@ -324,7 +335,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 }
 
 int main(int argc, char** argv) {
-//    GroundStateProblem prob;
+    //    GroundStateProblem prob;
     //
     ////    cout << prob.getE() << endl;
     ////    cout << prob.subst() << endl;
@@ -395,7 +406,7 @@ int main(int argc, char** argv) {
 #ifdef AMAZON
     //    path resdir("/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/Gutzwiller Phase Diagram");
     path resdir("/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/Canonical Transformation Gutzwiller");
-//    path resdir("/media/ubuntu/Results/CTG");
+    //    path resdir("/media/ubuntu/Results/CTG");
 #else
     //    path resdir("/Users/Abuenameh/Dropbox/Amazon EC2/Simulation Results/Gutzwiller Phase Diagram");
     path resdir("/Users/Abuenameh/Documents/Simulation Results/Canonical Transformation Gutzwiller");
@@ -558,9 +569,9 @@ int main(int argc, char** argv) {
             runtime0.push_back(pres.runtime0);
             runtimeth.push_back(pres.runtimeth);
             runtime2th.push_back(pres.runtime2th);
-//            runtime0.push_back(to_simple_string(milliseconds(1000 * pres.runtime0)));
-//            runtimeth.push_back(to_simple_string(milliseconds(1000 * pres.runtimeth)));
-//            runtime2th.push_back(to_simple_string(milliseconds(1000 * pres.runtime2th)));
+            //            runtime0.push_back(to_simple_string(milliseconds(1000 * pres.runtime0)));
+            //            runtimeth.push_back(to_simple_string(milliseconds(1000 * pres.runtimeth)));
+            //            runtime2th.push_back(to_simple_string(milliseconds(1000 * pres.runtime2th)));
         }
 
         printMath(os, "Wmu", resi, Wmu);
