@@ -161,7 +161,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
     GroundStateProblem* prob;
     opt lopt(LD_LBFGS, ndim);
-//    opt lopt(GN_DIRECT, ndim);
+    //    opt lopt(GN_DIRECT, ndim);
     {
         boost::mutex::scoped_lock lock(problem_mutex);
         prob = new GroundStateProblem();
@@ -169,9 +169,9 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         lopt.set_lower_bounds(-1);
         lopt.set_upper_bounds(1.1);
         lopt.set_min_objective(energyfunc, prob);
-//        lopt.set_maxtime(120);
-//        lopt.set_ftol_abs(1e-17);
-//        lopt.set_ftol_rel(1e-17);
+        //        lopt.set_maxtime(120);
+        //        lopt.set_ftol_abs(1e-17);
+        //        lopt.set_ftol_rel(1e-17);
     }
 
     for (;;) {
@@ -205,17 +205,15 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         fill(x0.begin(), x0.end(), 0.5);
         fill(xth.begin(), xth.end(), 0.5);
         fill(x2th.begin(), x2th.end(), 0.5);
-//        generate(x0.begin(), x0.end(), randx);
-//        generate(xth.begin(), xth.end(), randx);
-//        generate(x2th.begin(), x2th.end(), randx);
-
-        prob->setParameters(U0, dU, J, point.mu / scale);
-
-        for (int thi = 0; thi < 1; thi++) {
-
         generate(x0.begin(), x0.end(), randx);
         generate(xth.begin(), xth.end(), randx);
         generate(x2th.begin(), x2th.end(), randx);
+
+        prob->setParameters(U0, dU, J, point.mu / scale);
+
+        //        generate(x0.begin(), x0.end(), randx);
+        //        generate(xth.begin(), xth.end(), randx);
+        //        generate(x2th.begin(), x2th.end(), randx);
 
         prob->setTheta(0);
 
@@ -258,12 +256,19 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
         theta = params.theta;
 
-//        for (int thi = 0; thi < 10; thi++) {
+        for (int j = 0; j < 2; j++) {
 
-//        generate(xth.begin(), xth.end(), randx);
-//        generate(x2th.begin(), x2th.end(), randx);
+            //        for (int thi = 0; thi < 10; thi++) {
 
-        prob->setTheta(theta);
+            //        generate(xth.begin(), xth.end(), randx);
+            //        generate(x2th.begin(), x2th.end(), randx);
+
+            if (j == 1) {
+                copy(x0.begin(), x0.end(), xth.begin());
+                copy(x0.begin(), x0.end(), x2th.begin());
+            }
+
+            prob->setTheta(theta);
 
             double Eth;
             string resultth;
@@ -334,7 +339,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             if (pointRes.fs > -1e-5) {
                 break;
             } else {
-//                theta *= 0.4641588833612779;
+                //                theta *= 0.4641588833612779;
             }
         }
         pointRes.theta = theta;
