@@ -98,10 +98,12 @@ double GroundStateProblem::E(const vector<double>& f, vector<double>& grad) {
     Ef.setInput(params.data(), NL_P);
     Ef.evaluate();
     Ef.getOutput(E, NL_F);
+    if (!grad.empty()) {
     Egradf.setInput(f.data(), NL_X);
     Egradf.setInput(params.data(), NL_P);
     Egradf.evaluate();
     Egradf.output().getArray(grad.data(), grad.size(), DENSE);
+    }
     return E;
 }
 
