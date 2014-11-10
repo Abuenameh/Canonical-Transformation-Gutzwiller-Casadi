@@ -85,6 +85,7 @@ struct PointResults {
     double Eth;
     double E2th;
     double fs;
+    double Ux;
     vector<double> J;
     vector<double> U;
     double fmin;
@@ -199,6 +200,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             dU[i] = U[i] - U0;
             J[i] = JWij(W[i], W[mod(i + 1)]) / UW(point.x) / scale;
         }
+        pointRes.Ux = UW(point.x);
         pointRes.J = J;
         pointRes.U = U;
 
@@ -560,6 +562,7 @@ int main(int argc, char** argv) {
         threads.join_all();
 
         vector<pair<double, double> > Wmu;
+        vector<double> Uxs;
         vector<vector<double> > Js;
         vector<vector<double> > Us;
         vector<double> fs;
@@ -582,6 +585,7 @@ int main(int argc, char** argv) {
 
         for (PointResults pres : pointRes) {
             Wmu.push_back(make_pair(pres.W, pres.mu));
+            Uxs.push_back(pres.Ux);
             Js.push_back(pres.J);
             Us.push_back(pres.U);
             fs.push_back(pres.fs);
@@ -607,6 +611,7 @@ int main(int argc, char** argv) {
         }
 
         printMath(os, "Wmu", resi, Wmu);
+        printMath(os, "Uxs", resi, Uxs);
         printMath(os, "Js", resi, Js);
         printMath(os, "Us", resi, Us);
         printMath(os, "fs", resi, fs);
