@@ -160,8 +160,8 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         lopt.set_lower_bounds(-1);
         lopt.set_upper_bounds(1);
         lopt.set_min_objective(energyfunc, prob);
-        lopt.set_ftol_abs(1e-17);
-        lopt.set_ftol_rel(1e-17);
+//        lopt.set_ftol_abs(1e-17);
+//        lopt.set_ftol_rel(1e-17);
     }
 
     for (;;) {
