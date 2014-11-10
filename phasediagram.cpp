@@ -123,6 +123,13 @@ vector<double> norm(vector<double>& x) {
     return norms;
 }
 
+boost::random::mt19937 xrng;
+boost::random::uniform_real_distribution<> xuni(0, 1);
+
+double randx() {
+    return xuni(xrng);
+}
+
 void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<PointResults>& pres, progress_display& progress) {
 
     int ndim = 2 * L * dim;
@@ -196,9 +203,9 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         fill(x0.begin(), x0.end(), 0.5);
         fill(xth.begin(), xth.end(), 0.5);
         fill(x2th.begin(), x2th.end(), 0.5);
-        generate(x0.begin(), x0.end(), rand);
-        generate(xth.begin(), xth.end(), rand);
-        generate(x2th.begin(), x2th.end(), rand);
+        generate(x0.begin(), x0.end(), randx);
+        generate(xth.begin(), xth.end(), randx);
+        generate(x2th.begin(), x2th.end(), randx);
 
         prob->setParameters(U0, dU, J, point.mu / scale);
 
