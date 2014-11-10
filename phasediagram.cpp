@@ -203,11 +203,17 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         fill(x0.begin(), x0.end(), 0.5);
         fill(xth.begin(), xth.end(), 0.5);
         fill(x2th.begin(), x2th.end(), 0.5);
+//        generate(x0.begin(), x0.end(), randx);
+//        generate(xth.begin(), xth.end(), randx);
+//        generate(x2th.begin(), x2th.end(), randx);
+
+        prob->setParameters(U0, dU, J, point.mu / scale);
+
+        for (int thi = 0; thi < 10; thi++) {
+
         generate(x0.begin(), x0.end(), randx);
         generate(xth.begin(), xth.end(), randx);
         generate(x2th.begin(), x2th.end(), randx);
-
-        prob->setParameters(U0, dU, J, point.mu / scale);
 
         prob->setTheta(0);
 
@@ -250,10 +256,10 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
         theta = params.theta;
 
-        for (int thi = 0; thi < 10; thi++) {
+//        for (int thi = 0; thi < 10; thi++) {
 
-        generate(xth.begin(), xth.end(), randx);
-        generate(x2th.begin(), x2th.end(), randx);
+//        generate(xth.begin(), xth.end(), randx);
+//        generate(x2th.begin(), x2th.end(), randx);
 
         prob->setTheta(theta);
 
