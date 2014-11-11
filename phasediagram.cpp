@@ -491,13 +491,14 @@ int main(int argc, char** argv) {
 
         cout << "Res: " << resi << endl;
 
-        double muwidth = 0.1;
+        double muwidth = 0.05;
         queue<Point> points;
-        bool sample = false;
+        bool sample = true;
         if (sample) {
             for (int ix = 0; ix < nx; ix++) {
                 //            double mu0 = x[ix] / 1e12 + 0.05;
-                double mu0 = 7.142857142857143e-13 * x[ix] + 0.08571428571428572;
+//                double mu0 = 7.142857142857143e-13 * x[ix] + 0.08571428571428572;
+                double mu0 = -6.333293551338674e-24 * x[ix] * x[ix] - 8.967458328360531e-13 * x[ix] + 0.9514478259139914;
                 double mui = max(mumin, mu0 - muwidth);
                 double muf = min(mumax, mu0 + muwidth);
                 deque<double> mu(nmu);
@@ -518,7 +519,8 @@ int main(int argc, char** argv) {
             }
             for (int ix = 0; ix < nx; ix++) {
                 //            double mu0 = -3*x[ix] / 1e12 + 0.96;
-                double mu0 = -2.142857142857143e-12 * x[ix] + 0.942857142857143;
+//                double mu0 = -2.142857142857143e-12 * x[ix] + 0.942857142857143;
+                double mu0 = -3.301221096348316e-35 * x[ix] * x[ix] * x[ix] + 1.3058538719558353e-23 * x[ix] * x[ix] - 7.882264201707455e-13 * x[ix] + 0.0413527624303548;
                 double mui = max(mumin, mu0 - muwidth);
                 double muf = min(mumax, mu0 + muwidth);
                 deque<double> mu(nmu);
