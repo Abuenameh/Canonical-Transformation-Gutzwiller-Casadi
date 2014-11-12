@@ -16,9 +16,9 @@ using namespace casadi;
 
 using namespace boost::posix_time;
 
-#include <pagmo/src/pagmo.h>
-
-using namespace pagmo;
+//#include <pagmo/src/pagmo.h>
+//
+//using namespace pagmo;
 //using namespace pagmo::algorithm;
 //using namespace pagmo::problem;
 
@@ -76,22 +76,22 @@ private:
     double runtime;
 };
 
-class energyprob : public problem::base {
-public:
-    energyprob(int n/*, GroundStateProblem* prob_*/) : base(n)/*, prob(prob_)*/ {}
-    problem::base_ptr clone() const { return problem::base_ptr(new energyprob(*this)); }
-    
-    void setProblem(GroundStateProblem* prob_) { prob = prob_; }
-    
-    void objfun_impl(fitness_vector& f, const decision_vector& x) const {
-        vector<double> grad;
-        double En = prob->E(x, grad);
-        f[0] = En;
-    }
-    
-private:
-    GroundStateProblem* prob;
-};
+//class energyprob : public problem::base {
+//public:
+//    energyprob(int n/*, GroundStateProblem* prob_*/) : base(n)/*, prob(prob_)*/ {}
+//    problem::base_ptr clone() const { return problem::base_ptr(new energyprob(*this)); }
+//    
+//    void setProblem(GroundStateProblem* prob_) { prob = prob_; }
+//    
+//    void objfun_impl(fitness_vector& f, const decision_vector& x) const {
+//        vector<double> grad;
+//        double En = prob->E(x, grad);
+//        f[0] = En;
+//    }
+//    
+//private:
+//    GroundStateProblem* prob;
+//};
 
 double energyfunc(const vector<double>& x, vector<double>& grad, void *data);
 

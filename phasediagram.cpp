@@ -176,9 +176,9 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
     GroundStateProblem* prob;
     opt lopt(LD_LBFGS, ndim);
     opt gopt(GN_DIRECT, ndim);
-    energyprob eprob(ndim);
-    pagmo::algorithm::de_1220 algo(100);
-    int npop = 20;
+//    energyprob eprob(ndim);
+//    pagmo::algorithm::de_1220 algo(100);
+//    int npop = 20;
     {
         boost::mutex::scoped_lock lock(problem_mutex);
         prob = new GroundStateProblem();
@@ -194,7 +194,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         //        lopt.set_ftol_abs(1e-17);
         //        lopt.set_ftol_rel(1e-17);
                 
-                eprob.setProblem(prob);
+//                eprob.setProblem(prob);
     }
 
     for (;;) {
@@ -534,7 +534,7 @@ int main(int argc, char** argv) {
 
         double muwidth = 0.1;
         queue<Point> points;
-        bool sample = true;
+        bool sample = false;
         if (sample) {
             for (int ix = 0; ix < nx; ix++) {
                 //            double mu0 = x[ix] / 1e12 + 0.05;
