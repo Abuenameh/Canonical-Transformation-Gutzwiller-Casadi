@@ -268,8 +268,8 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 //                    generate(x2th.begin(), x2th.end(), randx);
 
             if (j == 1) {
-                copy(x0.begin(), x0.end(), xth.begin());
-                copy(x0.begin(), x0.end(), x2th.begin());
+//                copy(x0.begin(), x0.end(), xth.begin());
+//                copy(x0.begin(), x0.end(), x2th.begin());
             }
 
             prob->setTheta(theta);
