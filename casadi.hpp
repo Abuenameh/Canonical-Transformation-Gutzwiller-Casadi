@@ -16,11 +16,26 @@ using namespace casadi;
 
 using namespace boost::posix_time;
 
+#include <pagmo/src/pagmo.h>
+
+using namespace pagmo;
+//using namespace pagmo::algorithm;
+//using namespace pagmo::problem;
+
 #include "gutzwiller.hpp"
 
 class GroundStateProblem {
 public:
     GroundStateProblem();
+    
+//    problem::base_ptr clone() const { return problem::base_ptr(new GroundStateProblem(*this));s }
+//    
+//    void objfun_impl(fitness_vector& f, const decision_vector& x) const {
+//        vector<double> grad;
+//        double En = const_cast<GroundStateProblem*>(this)->E(x, grad);
+//        f[0] = En;
+//    }
+    
     void setParameters(double U0, vector<double>& dU, vector<double>& J, double mu);
     void setTheta(double theta);
     
@@ -59,6 +74,23 @@ private:
     
     string status;
     double runtime;
+};
+
+class energyprob : public problem::base {
+public:
+    energyprob(int n/*, GroundStateProblem* prob_*/) : base(n)/*, prob(prob_)*/ {}
+    problem::base_ptr clone() const { return problem::base_ptr(new energyprob(*this)); }
+    
+    void setProblem(GroundStateProblem* prob_) { prob = prob_; }
+    
+    void objfun_impl(fitness_vector& f, const decision_vector& x) const {
+        vector<double> grad;
+        double En = prob->E(x, grad);
+        f[0] = En;
+    }
+    
+private:
+    GroundStateProblem* prob;
 };
 
 double energyfunc(const vector<double>& x, vector<double>& grad, void *data);

@@ -12,7 +12,6 @@
 #include <vector>
 #include <iostream>
 
-
 using namespace std;
 
 const int L = 50;

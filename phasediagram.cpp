@@ -131,6 +131,19 @@ double randx() {
     return xuni(xrng);
 }
 
+//class energyprob : public base {
+//public:
+//    energyprob(GroundStateProblem& prob_) : prob(prob_) {}
+//    base_ptr clone() const;
+//    
+//    void objfun_impl(fitness_vector& f, const decision_vector& x) {
+//        
+//    }
+//    
+//private:
+//    GroundStateProblem& prob;
+//};
+
 void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<PointResults>& pres, progress_display& progress) {
 
     int ndim = 2 * L * dim;
@@ -162,17 +175,26 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 
     GroundStateProblem* prob;
     opt lopt(LD_LBFGS, ndim);
-    //    opt lopt(GN_DIRECT, ndim);
+    opt gopt(GN_DIRECT, ndim);
+    energyprob eprob(ndim);
+    pagmo::algorithm::de_1220 algo(2000);
+    int npop = 20;
     {
         boost::mutex::scoped_lock lock(problem_mutex);
         prob = new GroundStateProblem();
 
         lopt.set_lower_bounds(-1);
-        lopt.set_upper_bounds(1.1);
+        lopt.set_upper_bounds(1);
         lopt.set_min_objective(energyfunc, prob);
-        //        lopt.set_maxtime(120);
+        gopt.set_lower_bounds(-1);
+        gopt.set_upper_bounds(1.1);
+        gopt.set_min_objective(energyfunc, prob);
+                gopt.set_maxtime(120);
+//                lopt.set_maxtime(120);
         //        lopt.set_ftol_abs(1e-17);
         //        lopt.set_ftol_rel(1e-17);
+                
+                eprob.setProblem(prob);
     }
 
     for (;;) {
@@ -223,7 +245,12 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         string result0;
         try {
             prob->start();
-            result res = lopt.optimize(x0, E0);
+            population pop0(eprob, npop);
+            algo.evolve(pop0);
+            E0 = pop0.champion().f[0];
+            x0 = pop0.champion().x;
+//            result gres = gopt.optimize(x0, E0);
+            result res = SUCCESS;//lopt.optimize(x0, E0);
             prob->stop();
             result0 = to_string(res);
             //            E0 = prob->solve(x0);
@@ -259,7 +286,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         theta = params.theta;
 
         double count = 0;
-        for (int j = 0; j < 2; j++) {
+        for (int j = 0; j < 1; j++) {
             count = j;
 
             //        for (int thi = 0; thi < 10; thi++) {
@@ -278,7 +305,12 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             string resultth;
             try {
                 prob->start();
-                result res = lopt.optimize(xth, Eth);
+            population popth(eprob, npop);
+            algo.evolve(popth);
+            Eth = popth.champion().f[0];
+            xth = popth.champion().x;
+//                result gres = gopt.optimize(xth, Eth);
+                result res = SUCCESS;//lopt.optimize(xth, Eth);
                 prob->stop();
                 resultth = to_string(res);
                 //            Eth = prob->solve(xth);
@@ -311,7 +343,12 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             string result2th;
             try {
                 prob->start();
-                result res = lopt.optimize(x2th, E2th);
+            population pop2th(eprob, npop);
+            algo.evolve(pop2th);
+            E2th = pop2th.champion().f[0];
+            x2th = pop2th.champion().x;
+//                result gres = gopt.optimize(x2th, E2th);
+                result res = SUCCESS;//lopt.optimize(x2th, E2th);
                 prob->stop();
                 result2th = to_string(res);
                 //            E2th = prob->solve(x2th);
@@ -493,7 +530,7 @@ int main(int argc, char** argv) {
 
         double muwidth = 0.1;
         queue<Point> points;
-        bool sample = true;
+        bool sample = false;
         if (sample) {
             for (int ix = 0; ix < nx; ix++) {
                 //            double mu0 = x[ix] / 1e12 + 0.05;
