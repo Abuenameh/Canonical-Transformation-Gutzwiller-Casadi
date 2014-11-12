@@ -290,7 +290,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         theta = params.theta;
 
         double count = 0;
-        for (int j = 0; j < 1; j++) {
+        for (int j = 0; j < 2; j++) {
             count = j;
 
             //        for (int thi = 0; thi < 10; thi++) {
