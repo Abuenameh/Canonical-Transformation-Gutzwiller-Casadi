@@ -536,7 +536,7 @@ int main(int argc, char** argv) {
 
         cout << "Res: " << resi << endl;
 
-        double muwidth = 0.2;
+        double muwidth = 0.1;
         queue<Point> points;
         bool sample = true;
         if (sample) {
