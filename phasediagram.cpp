@@ -85,6 +85,7 @@ struct PointResults {
     double Eth;
     double E2th;
     double fs;
+    double Jx;
     double Ux;
     vector<double> J;
     vector<double> U;
@@ -227,6 +228,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             J[i] = JWij(W[i], W[mod(i + 1)]) / UW(point.x) / scale;
         }
         pointRes.Ux = UW(point.x);
+        pointRes.Jx = JWij(point.x, point.x);
         pointRes.J = J;
         pointRes.U = U;
 
@@ -290,7 +292,7 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         theta = params.theta;
 
         double count = 0;
-        for (int j = 0; j < 2; j++) {
+        for (int j = 0; j < 1; j++) {
             count = j;
 
             //        for (int thi = 0; thi < 10; thi++) {
@@ -341,45 +343,47 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
             pointRes.fth = xth;
             pointRes.Eth = Eth;
 
-            prob->setTheta(2 * theta);
-
-            double E2th;
-            string result2th;
-            try {
-                prob->start();
-//            population pop2th(eprob, npop);
-//            algo.evolve(pop2th);
-//            E2th = pop2th.champion().f[0];
-//            x2th = pop2th.champion().x;
-//                result gres = gopt.optimize(x2th, E2th);
-                result res = lopt.optimize(x2th, E2th);
-                prob->stop();
-                result2th = to_string(res);
-                //            E2th = prob->solve(x2th);
-            } catch (std::exception& e) {
-                prob->stop();
-                result res = lopt.last_optimize_result();
-                result2th = to_string(res) + ": " + e.what();
-                printf("Ipopt failed for E2th at %f, %f\n", point.x, point.mu);
-                cout << e.what() << endl;
-                E2th = numeric_limits<double>::quiet_NaN();
-            }
-            pointRes.status2th = result2th;
-            //        pointRes.status2th = prob->getStatus();
-            pointRes.runtime2th = prob->getRuntime();
-
-            norms = norm(x2th);
-            for (int i = 0; i < L; i++) {
-                for (int n = 0; n <= nmax; n++) {
-                    x2th[2 * (i * dim + n)] /= norms[i];
-                    x2th[2 * (i * dim + n) + 1] /= norms[i];
-                }
-            }
-
-            pointRes.f2th = x2th;
-            pointRes.E2th = E2th;
-
-            pointRes.fs = (E2th - 2 * Eth + E0) / (L * theta * theta);
+//            prob->setTheta(2 * theta);
+//
+//            double E2th;
+//            string result2th;
+//            try {
+//                prob->start();
+////            population pop2th(eprob, npop);
+////            algo.evolve(pop2th);
+////            E2th = pop2th.champion().f[0];
+////            x2th = pop2th.champion().x;
+////                result gres = gopt.optimize(x2th, E2th);
+//                result res = lopt.optimize(x2th, E2th);
+//                prob->stop();
+//                result2th = to_string(res);
+//                //            E2th = prob->solve(x2th);
+//            } catch (std::exception& e) {
+//                prob->stop();
+//                result res = lopt.last_optimize_result();
+//                result2th = to_string(res) + ": " + e.what();
+//                printf("Ipopt failed for E2th at %f, %f\n", point.x, point.mu);
+//                cout << e.what() << endl;
+//                E2th = numeric_limits<double>::quiet_NaN();
+//            }
+//            pointRes.status2th = result2th;
+//            //        pointRes.status2th = prob->getStatus();
+//            pointRes.runtime2th = prob->getRuntime();
+//
+//            norms = norm(x2th);
+//            for (int i = 0; i < L; i++) {
+//                for (int n = 0; n <= nmax; n++) {
+//                    x2th[2 * (i * dim + n)] /= norms[i];
+//                    x2th[2 * (i * dim + n) + 1] /= norms[i];
+//                }
+//            }
+//
+//            pointRes.f2th = x2th;
+//            pointRes.E2th = E2th;
+//
+//            pointRes.fs = (E2th - 2 * Eth + E0) / (L * theta * theta);
+            
+            pointRes.fs = (Eth - E0) / (L * theta * theta);
 
             if (pointRes.fs > -1e-5) {
                 break;
@@ -532,7 +536,7 @@ int main(int argc, char** argv) {
 
         cout << "Res: " << resi << endl;
 
-        double muwidth = 0.1;
+        double muwidth = 0.2;
         queue<Point> points;
         bool sample = true;
         if (sample) {
@@ -607,6 +611,7 @@ int main(int argc, char** argv) {
         threads.join_all();
 
         vector<pair<double, double> > Wmu;
+        vector<double> Jxs;
         vector<double> Uxs;
         vector<vector<double> > Js;
         vector<vector<double> > Us;
@@ -630,6 +635,7 @@ int main(int argc, char** argv) {
 
         for (PointResults pres : pointRes) {
             Wmu.push_back(make_pair(pres.W, pres.mu));
+            Jxs.push_back(pres.Jx);
             Uxs.push_back(pres.Ux);
             Js.push_back(pres.J);
             Us.push_back(pres.U);
@@ -650,12 +656,10 @@ int main(int argc, char** argv) {
             runtimeth.push_back(pres.runtimeth);
             runtime2th.push_back(pres.runtime2th);
             thetas.push_back(pres.theta);
-            //            runtime0.push_back(to_simple_string(milliseconds(1000 * pres.runtime0)));
-            //            runtimeth.push_back(to_simple_string(milliseconds(1000 * pres.runtimeth)));
-            //            runtime2th.push_back(to_simple_string(milliseconds(1000 * pres.runtime2th)));
         }
 
         printMath(os, "Wmu", resi, Wmu);
+        printMath(os, "Jxs", resi, Jxs);
         printMath(os, "Uxs", resi, Uxs);
         printMath(os, "Js", resi, Js);
         printMath(os, "Us", resi, Us);
