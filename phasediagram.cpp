@@ -544,7 +544,8 @@ int main(int argc, char** argv) {
                 //            double mu0 = x[ix] / 1e12 + 0.05;
 //                double mu0 = 7.142857142857143e-13 * x[ix] + 0.08571428571428572;
 //                double mu0 = -6.333293551338674e-24 * x[ix] * x[ix] - 8.967458328360531e-13 * x[ix] + 0.9514478259139914; // Delta = 0
-                double mu0 = -1.0374437419130666e-23 * x[ix] * x[ix] - 5.901199487215756e-13 * x[ix] + 0.8982308684507191; // Delta = 0.25
+//                double mu0 = -1.0374437419130666e-23 * x[ix] * x[ix] - 5.901199487215756e-13 * x[ix] + 0.8982308684507191; // Delta = 0.25
+                double mu0 = -1.0374437419130666e-23 * x[ix] * x[ix] - 4.901199487215756e-13 * x[ix] + 0.8982308684507191; // Delta = 0.25
                 double mui = max(mumin, mu0 - muwidth);
                 double muf = min(mumax, mu0 + muwidth);
                 deque<double> mu(nmu);
