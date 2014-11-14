@@ -538,7 +538,7 @@ int main(int argc, char** argv) {
 
         double muwidth = 0.1;
         queue<Point> points;
-        bool sample = true;
+        bool sample = false;
         if (sample) {
             for (int ix = 0; ix < nx; ix++) {
                 //            double mu0 = x[ix] / 1e12 + 0.05;
