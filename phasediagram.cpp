@@ -648,13 +648,13 @@ int main(int argc, char** argv) {
             f2th.push_back(pres.f2th);
             E0.push_back(pres.E0);
             Eth.push_back(pres.Eth);
-            E2th.push_back(pres.E2th);
+//            E2th.push_back(pres.E2th);
             status0.push_back(pres.status0);
             statusth.push_back(pres.statusth);
-            status2th.push_back(pres.status2th);
+//            status2th.push_back(pres.status2th);
             runtime0.push_back(pres.runtime0);
             runtimeth.push_back(pres.runtimeth);
-            runtime2th.push_back(pres.runtime2th);
+//            runtime2th.push_back(pres.runtime2th);
             thetas.push_back(pres.theta);
         }
 
@@ -669,16 +669,16 @@ int main(int argc, char** argv) {
         printMath(os, "fmax", resi, fmax);
         printMath(os, "f0", resi, f0);
         printMath(os, "fth", resi, fth);
-        printMath(os, "f2th", resi, f2th);
+//        printMath(os, "f2th", resi, f2th);
         printMath(os, "E0", resi, E0);
         printMath(os, "Eth", resi, Eth);
-        printMath(os, "E2th", resi, E2th);
+//        printMath(os, "E2th", resi, E2th);
         printMath(os, "status0", resi, status0);
         printMath(os, "statusth", resi, statusth);
-        printMath(os, "status2th", resi, status2th);
+//        printMath(os, "status2th", resi, status2th);
         printMath(os, "runtime0", resi, runtime0);
         printMath(os, "runtimeth", resi, runtimeth);
-        printMath(os, "runtime2th", resi, runtime2th);
+//        printMath(os, "runtime2th", resi, runtime2th);
         printMath(os, "thetas", resi, thetas);
 
         ptime end = microsec_clock::local_time();
