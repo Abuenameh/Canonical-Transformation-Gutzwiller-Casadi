@@ -15,7 +15,7 @@ using namespace boost::random;
 using namespace boost::filesystem;
 using namespace boost::posix_time;
 
-#include <coin/IpIpoptApplication.hpp>
+//#include <coin/IpIpoptApplication.hpp>
 
 #include <nlopt.hpp>
 
@@ -536,7 +536,7 @@ int main(int argc, char** argv) {
 
         cout << "Res: " << resi << endl;
 
-        double muwidth = 0.1;
+        double muwidth = 0.02;
         queue<Point> points;
         bool sample = true;
         if (sample) {
