@@ -479,6 +479,8 @@ int main(int argc, char** argv) {
     int numthreads = lexical_cast<int>(argv[11]);
 
     int resi = lexical_cast<int>(argv[12]);
+    
+    bool sample = lexical_cast<bool>(argv[13]);
 
 #ifdef AMAZON
     //    path resdir("/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/Gutzwiller Phase Diagram");
@@ -538,14 +540,15 @@ int main(int argc, char** argv) {
 
         double muwidth = 0.1;
         queue<Point> points;
-        bool sample = true;
+//        bool sample = true;
         if (sample) {
             for (int ix = 0; ix < nx; ix++) {
                 //            double mu0 = x[ix] / 1e12 + 0.05;
 //                double mu0 = 7.142857142857143e-13 * x[ix] + 0.08571428571428572;
 //                double mu0 = -6.333293551338674e-24 * x[ix] * x[ix] - 8.967458328360531e-13 * x[ix] + 0.9514478259139914; // Delta = 0
 //                double mu0 = -1.0374437419130666e-23 * x[ix] * x[ix] - 5.901199487215756e-13 * x[ix] + 0.8982308684507191; // Delta = 0.25
-                double mu0 = -1.0374437419130666e-23 * x[ix] * x[ix] - 4.901199487215756e-13 * x[ix] + 0.8982308684507191; // Delta = 0.25
+//                double mu0 = -1.0374437419130666e-23 * x[ix] * x[ix] - 4.901199487215756e-13 * x[ix] + 0.8982308684507191; // Delta = 0.25
+                double mu0 = 1.0275844755940469 - 1.3286603408812447e-12*x[ix] - 1.9177090288512203e-23*x[ix]*x[ix] + 9.572518996956652e-35*x[ix]*x[ix]*x[ix] - 2.095759744296641e-46*x[ix]*x[ix]*x[ix]*x[ix]; // Delta 0.25
                 double mui = max(mumin, mu0 - muwidth);
                 double muf = min(mumax, mu0 + muwidth);
                 deque<double> mu(nmu);
@@ -568,7 +571,8 @@ int main(int argc, char** argv) {
                 //            double mu0 = -3*x[ix] / 1e12 + 0.96;
 //                double mu0 = -2.142857142857143e-12 * x[ix] + 0.942857142857143;
 //                double mu0 = -3.301221096348316e-35 * x[ix] * x[ix] * x[ix] + 1.3058538719558353e-23 * x[ix] * x[ix] - 7.882264201707455e-13 * x[ix] + 0.0413527624303548; // Delta = 0
-                double mu0 = 8.938048153734245e-36 * x[ix] * x[ix] * x[ix] - 2.202590437883966e-25 * x[ix] * x[ix] + 4.3412578706695816e-13 * x[ix] + 0.023602991053971553; // Delta = 0.25
+//                double mu0 = 8.938048153734245e-36 * x[ix] * x[ix] * x[ix] - 2.202590437883966e-25 * x[ix] * x[ix] + 4.3412578706695816e-13 * x[ix] + 0.023602991053971553; // Delta = 0.25
+                double mu0 = 0.03615582350346575 - 5.005273114442404e-14*x[ix] + 6.275817853250553e-24*x[ix]*x[ix] - 1.4195907309128102e-35*x[ix]*x[ix]*x[ix]; // Delta = 0.25
                 double mui = max(mumin, mu0 - muwidth);
                 double muf = min(mumax, mu0 + muwidth);
                 deque<double> mu(nmu);
