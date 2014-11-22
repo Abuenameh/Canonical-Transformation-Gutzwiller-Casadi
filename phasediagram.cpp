@@ -564,7 +564,7 @@ int main(int argc, char** argv) {
                     Point point;
                     point.x = x[ix];
                     point.mu = mu[imu];
-                    points.push(point);
+//                    points.push(point);
                 }
             }
             for (int ix = 0; ix < nx; ix++) {
