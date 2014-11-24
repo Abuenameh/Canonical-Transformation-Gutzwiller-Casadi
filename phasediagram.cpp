@@ -550,7 +550,7 @@ int main(int argc, char** argv) {
 //                double mu0 = -1.0374437419130666e-23 * x[ix] * x[ix] - 4.901199487215756e-13 * x[ix] + 0.8982308684507191; // Delta = 0.25
 //                double mu0 = 1.0275844755940469 - 1.3286603408812447e-12*x[ix] - 1.9177090288512203e-23*x[ix]*x[ix] + 9.572518996956652e-35*x[ix]*x[ix]*x[ix] - 2.095759744296641e-46*x[ix]*x[ix]*x[ix]*x[ix]; // Delta 0.25
 //                double mu0 = 0.9617950685857694 - 7.84998396963284e-13*x[ix] - 9.165384267382779e-24*x[ix]*x[ix] + 3.646236061739209e-36*x[ix]*x[ix]*x[ix] + 4.290137652003345e-48*x[ix]*x[ix]*x[ix]*x[ix]; // Delta = 0.1
-                double mu0 = 0.9311179399500129 - 3.5751626448519524e-13*x[ix] - 7.407324226206937e-24*x[ix]*x[ix] - 1.376619100837241e-35*x[ix]*x[ix]*x[ix] + 4.1960731262022256e-4*x[ix]*x[ix]*x[ix]*x[ix]; // Delta = 0
+                double mu0 = 0.9311179399500129 - 3.5751626448519524e-13*x[ix] - 7.407324226206937e-24*x[ix]*x[ix] - 1.376619100837241e-35*x[ix]*x[ix]*x[ix] + 4.1960731262022256e-47*x[ix]*x[ix]*x[ix]*x[ix]; // Delta = 0
                 double mui = max(mumin, mu0 - muwidth);
                 double muf = min(mumax, mu0 + muwidth);
                 deque<double> mu(nmu);
