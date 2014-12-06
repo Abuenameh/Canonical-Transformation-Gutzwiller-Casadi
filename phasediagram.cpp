@@ -223,9 +223,9 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
 //            U0 += U[i] / L;
 //        }
         for (int i = 0; i < L; i++) {
-            U[i] = UW(W[i]) / UW(point.x) / scale;
+            U[i] = 1 / scale;//UW(W[i]) / UW(point.x) / scale;
             dU[i] = U[i] - U0;
-            J[i] = JWij(point.x, point.x) / scale;//JWij(W[i], W[mod(i + 1)]) / UW(point.x) / scale;
+            J[i] = JWij(W[i], W[mod(i + 1)]) / UW(point.x) / scale;
         }
         pointRes.Ux = UW(point.x);
         pointRes.Jx = JWij(point.x, point.x);
