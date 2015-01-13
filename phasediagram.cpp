@@ -612,6 +612,7 @@ int main(int argc, char** argv) {
 
         vector<PointResults> pointRes;
 
+        GroundStateProblem::setup();
         thread_group threads;
         for (int i = 0; i < numthreads; i++) {
             //                        threads.emplace_back(phasepoints, std::ref(xi), theta, std::ref(points), std::ref(f0res), std::ref(E0res), std::ref(Ethres), std::ref(fsres), std::ref(progress));
