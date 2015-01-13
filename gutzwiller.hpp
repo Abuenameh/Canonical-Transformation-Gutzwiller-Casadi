@@ -14,8 +14,8 @@
 
 using namespace std;
 
-const int L = 25;
-const int nmax = 5;
+const int L = 50;
+const int nmax = 6;
 const int dim = nmax + 1;
 
 template<class T>
