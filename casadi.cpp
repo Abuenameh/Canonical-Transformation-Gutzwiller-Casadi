@@ -16,7 +16,11 @@ void compileFunction(Function& f, string name) {
     f.generateCode(sourcename);
     string libraryname = name + ".so";
     string cmd;
+#ifdef AMAZON
+    cmd = "gcc -shared -fPIC -o " + libraryname + " " + sourcename;
+#else
     cmd = "gcc -shared -o " + libraryname + " " + sourcename;
+#endif
     ::system(cmd.c_str());
 }
 
