@@ -17,7 +17,7 @@ void compileFunction(Function& f, string name) {
     string libraryname = name + ".so";
     string cmd;
 #ifdef AMAZON
-    cmd = "gcc -shared -fPIC -o " + libraryname + " " + sourcename;
+    cmd = "gcc -shared -fPIC -O2 -o " + libraryname + " " + sourcename;
 #else
     cmd = "gcc -shared -o " + libraryname + " " + sourcename;
 #endif
