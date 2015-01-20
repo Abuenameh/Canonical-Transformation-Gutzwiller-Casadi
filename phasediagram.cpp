@@ -125,12 +125,12 @@ vector<double> norm(vector<double>& x) {
     return norms;
 }
 
-boost::random::mt19937 xrng;
-boost::random::uniform_real_distribution<> xuni(0, 1);
-
-double randx() {
-    return xuni(xrng);
-}
+//boost::random::mt19937 xrng;
+//boost::random::uniform_real_distribution<> xuni(0, 1);
+//
+//double randx() {
+//    return xuni(xrng);
+//}
 
 //class energyprob : public base {
 //public:
@@ -148,6 +148,13 @@ double randx() {
 void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<PointResults>& pres, progress_display& progress) {
 
     int ndim = 2 * L * dim;
+
+    boost::random::mt19937 xrng;
+    boost::random::uniform_real_distribution<> xuni(0, 1);
+    vector<double> xrand(ndim);
+    for (int i = 0; i < ndim; i++) {
+        xrand[i] = xuni(xrng);
+    }
 
     vector<double> x(ndim);
     vector<complex<double>*> f(L);
@@ -234,12 +241,15 @@ void phasepoints(Parameter& xi, Parameters params, queue<Point>& points, vector<
         pointRes.J = J;
         pointRes.U = U;
 
-        fill(x0.begin(), x0.end(), 0.5);
-        fill(xth.begin(), xth.end(), 0.5);
-        fill(x2th.begin(), x2th.end(), 0.5);
-        generate(x0.begin(), x0.end(), randx);
-        generate(xth.begin(), xth.end(), randx);
-        generate(x2th.begin(), x2th.end(), randx);
+//        fill(x0.begin(), x0.end(), 0.5);
+//        fill(xth.begin(), xth.end(), 0.5);
+//        fill(x2th.begin(), x2th.end(), 0.5);
+//        generate(x0.begin(), x0.end(), randx);
+//        generate(xth.begin(), xth.end(), randx);
+//        generate(x2th.begin(), x2th.end(), randx);
+        x0 = xrand;
+        xth = xrand;
+        x2th = xrand;
 
         prob->setParameters(U0, dU, J, point.mu / scale);
 
